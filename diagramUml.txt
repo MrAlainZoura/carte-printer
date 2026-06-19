@@ -1,0 +1,240 @@
+Classe Fond {
+  - idFond : String
+  - typeFond : Enum {Banque, Caisse}
+  - solde : Decimal
+  - devise : Monnaie
+
+  + crediter(montant : Decimal)
+  + debiter(montant : Decimal)
+  + getSolde() : Decimal
+}
+
+Classe Banque hérite de Fond {
+  - nom : String
+  - codeSWIFT : String
+  - numeroCompte : String
+  - IBAN : String
+  - adresse : String
+  - pays : String
+  - typeCompte : String
+  - dateOuverture : Date
+  - statut : Enum {Actif, Suspendu, Cloture}
+  - contactBancaire : String
+  - limiteTransaction : Decimal
+
+  + rapprocher()
+  + genererReleve()
+}
+
+Classe Caisse hérite de Fond {
+  - identifiant : String
+  - localisation : String
+  - responsable : String
+  - typeCaisse : Enum {Principale, Secondaire, Mobile}
+  - dateOuverture : Date
+  - statut : Enum {Active, Suspendue, Cloturee}
+  - limiteTransaction : Decimal
+  - historiqueTransactions : List<Transaction>
+
+  + alimenter(montant : Decimal)
+  + retirer(montant : Decimal)
+  + journaliser(transaction : Transaction)
+}
+
+Classe Monnaie {
+  - codeMonnaie : String
+  - nomMonnaie : String
+  - symbole : String
+  - estLocale : Boolean
+
+  + convertir(montant : Decimal, monnaieCible : Monnaie) : Decimal
+}
+
+Classe TauxEchange {
+  - idTaux : String
+  - monnaieSource : Monnaie
+  - monnaieCible : Monnaie
+  - taux : Decimal
+  - date : Date
+
+  + getTaux(monnaieSource : Monnaie, monnaieCible : Monnaie) : Decimal
+}
+
+Classe Transaction {
+  - idTransaction : String
+  - montant : Decimal
+  - date : Date
+  - type : Enum {Entree, Sortie}
+  - origineFond : Fond
+  - description : String
+  - statut : Enum {Valide, Annule, EnAttente}
+  - monnaieUtilisee : Monnaie
+  - entreprise : Entreprise
+
+  + valider()
+  + annuler()
+  + journaliser()
+}
+
+Classe Facture hérite de Transaction {
+  - idFacture : String
+  - fournisseur : String
+  - dateEmission : Date
+  - dateEcheance : Date
+  - statutFacture : Enum {EnAttente, Payee, Echue}
+
+  + payer(fond : Fond)
+  + verifierEcheance()
+  + mettreAJourStatut(nouveauStatut : Enum)
+}
+
+Classe Entreprise {
+  - idEntreprise : String
+  - nom : String
+  - numeroIdentification : String
+  - adresse : String
+  - secteurActivite : String
+  - devisePrincipale : Monnaie
+  - statut : Enum {Active, Suspendue, Cloturee}
+
+  + ajouterEmploye(employe : Employe)
+  + genererBulletinPaie(employe : Employe)
+  + ajouterTransaction(transaction : Transaction)
+}
+
+Classe Employe {
+  - idEmploye : String
+  - matricule : String
+  - nom : String
+  - prenom : String
+  - poste : String
+  - service : String
+  - dateEmbauche : Date
+  - statut : Enum {Permanent, Temporaire, Stagiaire}
+  - salaireBase : Decimal
+  - primes : List<CriterePaiement>
+  - indemnites : List<CriterePaiement>
+  - heuresSupplementaires : Decimal
+  - avantagesNature : String
+  - retenues : List<CriterePaiement>
+  - netAPayer : Decimal
+  - devisePaiement : Monnaie
+  - modePaiementPrefere : Enum {Banque, Caisse}
+
+  + calculerSalaireNet() : Decimal
+  + choisirModePaiement() : Fond
+}
+
+Classe CriterePaiement {
+  - idCritere : String
+  - description : String
+  - typeCritere : Enum {Fixe, Variable, Bonus, Prime}
+  - valeur : Decimal
+  - periodicite : Enum {Mensuel, Hebdomadaire, Annuel, Occasionnel}
+  - dateDebut : Date
+  - dateFin : Date
+
+  + appliquer(employe : Employe)
+}
+
+Classe OptionPaiement {
+  - idOption : String
+  - description : String
+  - adaptable : Boolean
+  - conditions : String
+
+  + adapterPaiement(employe : Employe)
+}
+
+Classe Paiement {
+  - idPaiement : String
+  - montant : Decimal
+  - datePaiement : Date
+  - modePaiement : Enum {Virement, Especes, MobileMoney, Cheque}
+  - employe : Employe
+  - fondSource : Fond
+  - statut : Enum {EnCours, Effectue, Echoue}
+
+  + executer()
+  + changerStatut(nouveauStatut : Enum)
+}
+
+Classe JournalPaiement {
+  - idJournal : String
+  - date : Date
+  - description : String
+  - listePaiements : List<Paiement>
+
+  + ajouterPaiement(paiement : Paiement)
+  + exporterJournal()
+}
+
+Classe FichierPaiement {
+  - idFichier : String
+  - typeFichier : Enum {CSV, XML, JSON}
+  - dateGeneration : Date
+  - contenu : String
+  - statut : Enum {Genere, Transmis, Archive}
+
+  + generer(typeFichier : Enum)
+  + transmettre()
+}
+
+-----------------------------------------------------------
+Entreprise (idEntreprise, nom, numeroIdentification, adresse, secteurActivite, devisePrincipale, statut)
+Employe (idEmploye, matricule, nom, prenom, poste, service, dateEmbauche, statut, salaireBase, netAPayer, devisePaiement, modePaiementPrefere, idEntreprise FK)
+CriterePaiement (idCritere, description, typeCritere, valeur, periodicite, dateDebut, dateFin, idEmploye FK)
+OptionPaiement (idOption, description, adaptable, conditions, idEmploye FK)
+
+Fond (idFond, typeFond, solde, devise)
+Banque (idBanque, idFond FK, nom, codeSWIFT, numeroCompte, IBAN, adresse, pays, typeCompte, dateOuverture, statut, contactBancaire, limiteTransaction)
+Caisse (idCaisse, idFond FK, identifiant, localisation, responsable, typeCaisse, dateOuverture, statut, limiteTransaction)
+
+Monnaie (codeMonnaie PK, nomMonnaie, symbole, estLocale)
+TauxEchange (idTaux, monnaieSource FK, monnaieCible FK, taux, date)
+
+Transaction (idTransaction, montant, date, type, origineFond FK, description, statut, monnaieUtilisee FK, entreprise FK)
+Facture (idFacture, fournisseur, dateEmission, dateEcheance, statutFacture, idTransaction FK)
+
+Paiement (idPaiement, montant, datePaiement, modePaiement, employe FK, fondSource FK, statut)
+JournalPaiement (idJournal, date, description)
+FichierPaiement (idFichier, typeFichier, dateGeneration, contenu, statut)
+-----------------------------------------------------------
+
+Acteur Entreprise
+Acteur Employe
+Acteur Fournisseur
+Acteur Banque
+Acteur Caisse
+Acteur Administrateur
+
+Cas d'utilisation : Gérer Employés
+Cas d'utilisation : Calculer Salaire Net
+Cas d'utilisation : Exécuter Paiement Salaire
+Cas d'utilisation : Règler Facture Fournisseur
+Cas d'utilisation : Journaliser Paiement
+Cas d'utilisation : Générer Fichier Paiement
+Cas d'utilisation : Rapprochement Bancaire
+Cas d'utilisation : Contrôle de Caisse
+Cas d'utilisation : Conversion Monnaie Locale
+Cas d'utilisation : Exporter Bulletin de Paie
+
+Entreprise --> Gérer Employés
+Entreprise --> Règler Facture Fournisseur
+Entreprise --> Ajouter Transaction
+
+Employe --> Calculer Salaire Net
+Employe --> Exécuter Paiement Salaire
+
+Fournisseur --> Règler Facture Fournisseur
+
+Banque --> Exécuter Paiement Salaire
+Banque --> Rapprochement Bancaire
+
+Caisse --> Exécuter Paiement Salaire
+Caisse --> Contrôle de Caisse
+
+Administrateur --> Journaliser Paiement
+Administrateur --> Générer Fichier Paiement
+Administrateur --> Conversion Monnaie Locale
+Administrateur --> Exporter Bulletin de Paie

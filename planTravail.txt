@@ -1,0 +1,60 @@
+Plan de travail Backend Laravel 13 API
+Projet : Backend GPaie
+Objectif : Développer une API complète pour la gestion des employés, paie, prêts/avances sur salaire, factures et comptabilité OHADA.
+
+---------------------------------------------------
+Phase 1 – Initialisation & Architecture (Semaine 1)
+---------------------------------------------------
+- Installation Laravel 13 et configuration environnement
+- Mise en place du schéma relationnel (migrations)
+- Configuration base de données
+- Relations Eloquent (FK, One-to-Many, Many-to-Many)
+
+Livraison : Base technique + migrations validées
+
+---------------------------------------------------
+Phase 2 – Modules de base (Semaines 2–3)
+---------------------------------------------------
+- Gestion des Employés (CRUD)
+- Gestion des Fonds (Banque, Caisse, Monnaie, Taux d’échange)
+- Gestion des Transactions (création, validation, annulation)
+- Authentification & Sécurité (JWT/Sanctum, rôles)
+
+Livraison : API Employés + Fonds + Transactions
+
+---------------------------------------------------
+Phase 3 – Paie & Factures (Semaines 4–5)
+---------------------------------------------------
+- Module Paie : calcul salaire net, primes, retenues
+- Paiements : exécution, journalisation, fichiers (CSV/XML)
+- Factures : émission, échéance, règlement fournisseur
+
+Livraison : API Paie + Factures + Paiements
+
+---------------------------------------------------
+Phase 4 – Prêts/Avances sur Salaire (Semaines 6–7)
+---------------------------------------------------
+- Octroi du prêt
+- Calcul des mensualités et intérêts
+- Remboursements : retenue sur salaire et versement direct
+- Suivi des remboursements terminés et non terminés
+
+Livraison : API PrêtSalaire complète
+
+---------------------------------------------------
+Phase 5 – Comptabilité OHADA (Semaines 8–9)
+---------------------------------------------------
+- Génération automatique des écritures comptables
+- Journaux comptables (Banque, Caisse, Paie, Achat, Vente)
+- Exportation états financiers OHADA
+
+Livraison : API Comptabilité OHADA
+
+---------------------------------------------------
+Phase 6 – Tests & Livraison (Semaines 10–11)
+---------------------------------------------------
+- Tests unitaires & fonctionnels (PHPUnit, Pest)
+- Documentation API (Swagger/OpenAPI)
+- Livraison progressive : staging puis production
+
+Livraison finale : Backend complet et documenté
