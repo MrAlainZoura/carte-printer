@@ -3,16 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Models\Propietaire;
+use App\Models\Vehicule;
 use Illuminate\Http\Request;
+use App\Services\ProprietaireService;
 
 class PropietaireController extends Controller
 {
+    protected ProprietaireService $service;
+
+    public function __construct(ProprietaireService $service)
+    {
+        $this->service = $service;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        return $this->service->index();
     }
 
     /**
@@ -20,7 +29,7 @@ class PropietaireController extends Controller
      */
     public function create()
     {
-        //
+       return $this->service->create();
     }
 
     /**
@@ -28,31 +37,31 @@ class PropietaireController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        return $this->service->store($request);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Propietaire $propietaire)
+    public function show(int $id)
     {
-        //
+        return $this->service->show($id);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Propietaire $propietaire)
+    public function edit(int $id)
     {
-        //
+        return $this->service->edit($id);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Propietaire $propietaire)
+    public function update(int $id, Request $request)
     {
-        //
+        return $this->service->update($id, $request);
     }
 
     /**
@@ -60,6 +69,6 @@ class PropietaireController extends Controller
      */
     public function destroy(Propietaire $propietaire)
     {
-        //
+        return $this->service->delete($propietaire->id);
     }
 }
