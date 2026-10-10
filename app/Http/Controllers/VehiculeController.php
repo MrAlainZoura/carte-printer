@@ -35,7 +35,8 @@ class VehiculeController extends Controller
      */
     public function store(Request $request)
     {
-        return $this->service->store($request);
+        $vehicules = $this->service->store($request)['data'];
+        return to_route('vehicules.index')->with('success', 'Véhicule créé avec succès.');
     }
 
     /**

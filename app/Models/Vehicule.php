@@ -26,8 +26,17 @@ class Vehicule extends Model
     /**
      * Propriétaire du véhicule.
      */
-    public function propietaire(): BelongsTo
+    public function proprietaire0(): BelongsTo
     {
         return $this->belongsTo(Propietaire::class);
     }
+
+    public function proprietaire(): BelongsTo
+{
+    return $this->belongsTo(
+        Propietaire::class,  // Modèle associé
+        'propietaire_id',    // Clé étrangère dans la table actuelle
+        'id'                 // Clé primaire dans la table proprietaires
+    );
+}
 }

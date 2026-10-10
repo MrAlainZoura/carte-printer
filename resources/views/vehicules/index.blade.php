@@ -53,6 +53,7 @@
                         <th class="px-6 py-4">Couleur</th>
                         <th class="px-6 py-4">Propriétaire</th>
                         <th class="px-6 py-4">Usage</th>
+                        <th class="px-6 py-4">Action</th>
                     </tr>
                 </thead>
 
@@ -79,11 +80,29 @@
                             </td>
 
                             <td class="whitespace-nowrap px-6 py-4">
-                                {{ $vehicule->propietaire?->nom ?? 'Non renseigné' }}
+                                {{ $vehicule->proprietaire?->nom_complet ?? 'Non renseigné' }}
                             </td>
 
                             <td class="whitespace-nowrap px-6 py-4">
                                 {{ $vehicule->usage }}
+                            </td>
+                             <td class="whitespace-nowrap px-6 py-4">
+
+                                <button
+                                    type="button"
+                                    class="rounded-lg p-2 text-gray-500 transition hover:bg-blue-50 hover:text-blue-700"
+                                    title="Voir les détails"
+                                    aria-label="Voir les détails de {{ $vehicule->immatriculation }}">
+
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0c-1.5 4-5 6-9 6s-7.5-2-9-6c1.5-4 5-6 9-6s7.5 2 9 6z" />
+                                    </svg>
+
+                                </button>
+
                             </td>
 
                         </tr>

@@ -90,9 +90,9 @@ class VehiculesService implements VehiculeServiceInterface
             $proprietaireId = $saveProprietaire['data']->id;
         }
         
-        
+
         $proprietaire_id = $proprietaireId ?? null;
-        dd('ok ancien');
+
         $data = $request->only([
             'propietaire_id',
             'marque',
@@ -108,6 +108,8 @@ class VehiculesService implements VehiculeServiceInterface
             'chassis',
             'cartinspection'
         ]);
+        $data['propietaire_id'] = $data['propietaire_id'] ?? $proprietaire_id;
+        
         $vehicule = Vehicule::create($data);
 
         return [
@@ -139,7 +141,8 @@ class VehiculesService implements VehiculeServiceInterface
 
     public function index()
     {
-        $vehicules = Vehicule::latest()->paginate(10);
+        //dd(Vehicule::with('proprietaire')->first());
+        $vehicules = Vehicule::with('proprietaire')->latest()->paginate(10);
         return view('vehicules.index', compact('vehicules'));
     }
     public function delete(int $id)

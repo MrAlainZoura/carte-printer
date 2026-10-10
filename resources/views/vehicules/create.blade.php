@@ -558,8 +558,9 @@
                         <option value="">Sélectionner l'usage</option>
 
                         @foreach([
-                            'Privé' => 'Usage privé',
-                            'Commercial' => 'Usage commercial',
+                            'Taxi'=>"Taxi",
+                            'Privé' => 'Personnel',
+                            'Commercial' => 'Commercial',
                             'Transport en commun' => 'Transport en commun',
                             'Transport de marchandises' => 'Transport de marchandises',
                             'Administratif' => 'Usage administratif',
