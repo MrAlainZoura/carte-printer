@@ -74,7 +74,7 @@ class AuthService implements AuthServiceInterface
             return back()->with('error', 'Identifiants incorrects.');
         }
 
-        return view('dashboard.index')->with('token', $token);
+        return to_route('dashboard')->with('token', $token);
         //return $this->respondWithToken($token);
     }
 

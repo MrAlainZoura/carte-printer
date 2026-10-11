@@ -24,7 +24,7 @@ class ProprietaireService implements ProprietaireServiceInterface
             'telephone'         => [
                     'required',
                     'string',
-                    'unique:propietaires',
+                    'unique:propietaires,telephone',
                     'regex:/^\+[1-9][0-9]{7,14}$/'
                 ],
         ]);

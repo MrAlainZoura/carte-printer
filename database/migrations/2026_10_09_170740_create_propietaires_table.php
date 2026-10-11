@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('propietaires', function (Blueprint $table) {
             $table->id();
             $table->string('type')->default('personne physique');
-            $table->string('nom_complet');
+            $table->string('nom_complet')->nullable();
             $table->string('raison_sociale')->nullable();
             $table->string('adresse_physique')->nullable();
             $table->string('telephone')->nullable();

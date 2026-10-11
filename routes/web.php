@@ -50,3 +50,9 @@ Route::prefix('vehicules')
 
     return 'Email envoyé avec succès !';
 });
+
+Route::get('/carte/{id?}', [\App\Http\Controllers\CarteController::class, 'imprimerCarte'])->name('carte.imprimer');
+
+Route::get('/test-php', function () {
+    phpinfo();
+});

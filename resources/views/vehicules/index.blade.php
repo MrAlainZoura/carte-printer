@@ -80,7 +80,7 @@
                             </td>
 
                             <td class="whitespace-nowrap px-6 py-4">
-                                {{ $vehicule->proprietaire?->nom_complet ?? 'Non renseigné' }}
+                                {{ $vehicule->proprietaire?->nom_complet ??  $vehicule->proprietaire?->raison_sociale ?? 'Non renseigné' }}
                             </td>
 
                             <td class="whitespace-nowrap px-6 py-4">

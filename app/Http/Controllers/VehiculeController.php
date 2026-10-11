@@ -19,7 +19,8 @@ class VehiculeController extends Controller
      */
     public function index()
     {
-        return $this->service->index();
+        $vehicules =$this->service::all()[0];
+        return  view('vehicules.index', compact('vehicules'));
     }
 
     /**

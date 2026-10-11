@@ -8,8 +8,8 @@ interface VehiculeServiceInterface
 {
     public function create();
     public function store(Request $data);
-    public function show(int $id);
-    public function index();
+    static public function show(int $id);
+    static public function all();
     public function delete(int $id);
     public function edit(int $id);
     public function update(int $id, Request $data);

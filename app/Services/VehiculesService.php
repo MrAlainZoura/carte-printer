@@ -124,9 +124,9 @@ class VehiculesService implements VehiculeServiceInterface
         return view('vehicules.create', compact('proprietaires'));
     }
 
-    public function show(int $id)
+    static public function show(int $id):array
     {
-        $vehicule = Vehicule::find($id);
+        $vehicule = Vehicule::with('proprietaire')->find($id);
         if(!$vehicule) {
             return [
                 'message' => 'Véhicule non trouvé',
@@ -139,11 +139,11 @@ class VehiculesService implements VehiculeServiceInterface
         ];    
     }
 
-    public function index()
+    static public function all():array
     {
         //dd(Vehicule::with('proprietaire')->first());
-        $vehicules = Vehicule::with('proprietaire')->latest()->paginate(10);
-        return view('vehicules.index', compact('vehicules'));
+        $vehicules = Vehicule::with('proprietaire')->latest();
+        return [$vehicules->paginate(10),$vehicules->get() ]; // view('vehicules.index', compact('vehicules'));
     }
     public function delete(int $id)
     {
