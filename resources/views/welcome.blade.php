@@ -6,56 +6,25 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <title>Accueil | Mon Application</title>
+    <title>Accueil | VCarte</title>
 </head>
 
 <body class="min-h-screen bg-gray-50 text-gray-800">
 
     <!-- Navigation -->
-    <nav class="border-b border-gray-200 bg-white">
-        <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-
-            <a href="{{ url('/') }}"
-               class="flex items-center gap-2 text-xl font-bold text-blue-700">
-                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor"
-                         viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"/>
-                    </svg>
-                </span>
-
-                Mon Application
-            </a>
-
-            <div class="flex items-center gap-3">
-                <a href="{{ route('login') }}"
-                   class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
-                    Connexion
-                </a>
-
-                <a href="{{ route('register') }}"
-                   class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 focus:ring-4 focus:ring-blue-300">
-                    S'inscrire
-                </a>
-            </div>
-
-        </div>
-    </nav>
-
+   @include('composant.navlogin')
     <!-- Section principale -->
     <main class="flex min-h-[80vh] items-center justify-center px-6 py-16">
 
         <div class="mx-auto max-w-3xl text-center">
 
             <span class="mb-6 inline-flex items-center rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700">
-                Bienvenue sur notre plateforme
+                Bienvenue sur notre plateforme VCarte
             </span>
 
             <h1 class="mb-6 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-6xl">
-                Une expérience simple,
-                <span class="text-blue-700">moderne et efficace.</span>
+                Mon Véhicule Ma Carte, <br>
+                <span class="text-blue-700">En quelques clics.</span>
             </h1>
 
             <p class="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-gray-500">
@@ -85,7 +54,7 @@
             </div>
 
             <!-- Technologies -->
-            <div class="mt-14 border-t border-gray-200 pt-8">
+            <div class="mt-14 border-t border-gray-200 pt-8 hidden">
                 <p class="mb-4 text-sm text-gray-500">
                     Une interface construite avec des technologies modernes
                 </p>
@@ -114,7 +83,7 @@
     <!-- Pied de page -->
     <footer class="border-t border-gray-200 bg-white">
         <div class="mx-auto max-w-7xl px-6 py-5 text-center text-sm text-gray-500">
-            &copy; {{ date('Y') }} Mon Application. Tous droits réservés.
+            &copy; {{ date('Y') }} Zouracorp - Tous droits réservés.
         </div>
     </footer>
 

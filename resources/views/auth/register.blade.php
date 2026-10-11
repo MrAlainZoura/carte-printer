@@ -6,37 +6,13 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        <title>Inscription | Mon Application</title>
+        <title>Inscription | VCarte</title>
     </head>
 
     <body class="min-h-screen bg-gray-50 text-gray-800">
 
         <!-- En-tête -->
-        <nav class="border-b border-gray-200 bg-white">
-            <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-
-                <a href="{{ url('/') }}"
-                   class="flex items-center gap-2 text-xl font-bold text-blue-700">
-
-                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor"
-                             viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"/>
-                        </svg>
-                    </span>
-
-                    Mon Application
-                </a>
-
-                <a href="{{ route('login') }}"
-                   class="text-sm font-medium text-blue-700 hover:text-blue-800">
-                    Se connecter
-                </a>
-
-            </div>
-        </nav>
+           @include('composant.navlogin')
 
         <!-- Formulaire d'inscription -->
         <main class="flex min-h-[85vh] items-center justify-center px-4 py-12">
