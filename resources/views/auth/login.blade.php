@@ -91,6 +91,20 @@
                         </div>
                     @endif
 
+                     <!-- Erreurs de validation -->
+                    @if (session('echec'))
+                        <div class="mb-5 rounded-lg bg-red-50 p-4 text-sm text-red-700"
+                             role="alert">
+                            <p class="mb-2 font-medium">
+                                Impossible de vous connecter.
+                            </p>
+
+                            <ul class="list-inside list-disc">
+                                <li>{{ session('echec') }}</li>
+                            </ul>
+                        </div>
+                    @endif
+
                     <!-- Formulaire de connexion -->
                     <form method="POST" action="{{ route('auth.login') }}" class="space-y-5">
                         @csrf
@@ -103,7 +117,7 @@
                             </label>
 
                             <input
-                                type="email"
+                                type="text"
                                 name="identifiant"
                                 id="email"
                                 value="{{ old('identifiant') }}"
@@ -114,7 +128,7 @@
                                 class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
                             >
 
-                            @error('email')
+                            @error('identifiant')
                                 <p class="mt-2 text-sm text-red-600">
                                     {{ $message }}
                                 </p>

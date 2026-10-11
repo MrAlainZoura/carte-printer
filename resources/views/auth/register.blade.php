@@ -149,7 +149,7 @@
 
                         <!-- tel -->
                         <div>
-                            <label for="email"
+                            <label for="tel"
                                    class="mb-2 block text-sm font-medium text-gray-900">
                                 Telephone
                             </label>
@@ -158,14 +158,14 @@
                                 type="text"
                                 name="tel"
                                 id="tel"
-                                value="{{ old('email') }}"
+                                value="{{ old('tel') }}"
                                 placeholder="+243 000 000 000"
                                 autocomplete="tel"
                                 required
                                 class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
                             >
 
-                            @error('email')
+                            @error('tel')
                                 <p class="mt-2 text-sm text-red-600">
                                     {{ $message }}
                                 </p>
@@ -183,7 +183,7 @@
                                 type="password"
                                 name="password"
                                 id="password"
-                                placeholder="Minimum 8 caractères"
+                                placeholder="Minimum 6 caractères"
                                 autocomplete="new-password"
                                 required
                                 class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
