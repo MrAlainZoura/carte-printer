@@ -474,7 +474,7 @@
                         <option value="">Sélectionner un type</option>
 
                         @foreach([
-                            'Moto',
+                            'MOTO',
                             'Berline',
                             'SUV',
                             'Pick-up',
@@ -558,7 +558,7 @@
                         <option value="">Sélectionner l'usage</option>
 
                         @foreach([
-                            'Taxi'=>"Taxi",
+                            'TAXI'=>"TAXI",
                             'Privé' => 'Personnel',
                             'Commercial' => 'Commercial',
                             'Transport en commun' => 'Transport en commun',

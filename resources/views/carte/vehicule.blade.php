@@ -13,6 +13,7 @@
         margin: 0;
         padding: 0;
         font-family: Arial, sans-serif;
+        font-size: 8pt;
     }
 
     .card {
@@ -67,19 +68,22 @@
         display:none;
     }
     .separateur{
-        padding: 8mm;
-        margin: 5mm;
+        padding: 4mm;
+        margin: 3mm;
     }
     .separateurV{
         margin-top: 8mm;
        /* border: 1px solid #eae363;*/
     }
     .milieu{
-        padding: 4.8mm;
+        position: absolute;
+        padding: 6mm;
     }
     .prerempli{
         padding-left: 25mm;
-        margin-right: 25mm;
+    }
+    .prerempliV{
+        padding-left: 20mm;
     }
 
     .tdQR{
@@ -106,6 +110,9 @@
         margin: 0;
         width: 2mm;
         height: 1mm;
+        display: flex;
+        align-items: center;
+        text-align: center;
         /*border: 1px solid #000;*/
     }
     .tcenter{
@@ -113,7 +120,6 @@
         align-items: center;
         justify-content: center;
         text-align: center;
-        /*background-color: red;*/
     }
    
 
@@ -136,57 +142,112 @@
             </tr>
             <tr>
                 <td colspan="2" ></td>
-                <td colspan="2" class="tsamll">
-                    {{ $vehicule->proprietaire?->nom_complet ??  $vehicule->proprietaire?->raison_sociale }}<br>
-                    {{ $vehicule->proprietaire?->adresse_physique ?? 'Non renseigné' }}<br>
-                    {{$vehicule->proprietaire->impot  ?? '-'}} <br>
+                <td colspan="" class="tsamll">
+                    {{ $vehicule->proprietaire?->nom_complet ??  $vehicule->proprietaire?->raison_sociale }}
                 </td>
-                
+                <td></td>
             </tr>
-                <tr>
-                    <td colspan="2" class="prerempli"></td>
+
+            <tr>
+                <td colspan="2" ></td>
+                <td colspan="" class="tsamll">
+                    {{ $vehicule->proprietaire?->adresse_physique ?? 'Non renseigné' }}
+                </td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td colspan="2" ></td>
+                <td colspan="" class="tsamll">
+                    {{$vehicule->proprietaire->impot  ?? '-'}}
+                </td>
+                <td class="qr tdQR" rowspan="4">
+                   <img src="{{ $qrCode }}" alt="QR Code du véhicule" width="80" height="80">
+                    <p class="dateOctroi">{{$vehicule->date}}</p> 
+                </td> 
+            </tr>
+
+            <tr>
+                <td colspan="2" class="prerempli"></td>
                     
-                    <td class="tsamll">
-                         {{ $vehicule->an_circulation }}<br>
-                        {{ $vehicule->usage }}<br>
-                        {{ $vehicule->immatriculation }}
-                    </td>  
-                    <td class="qr tdQR">
-                        <img
-                            src="{{ $qrCode }}"
-                            alt="QR Code du véhicule"
-                            width="60"
-                            height="60"
-                        >
-                        <p class="dateOctroi">{{$vehicule->date}}</p> 
-                    </td>  
+                <td class="tsamll">
+                    {{ $vehicule->an_circulation }}
+                </td>  
+                <td class="">
+                       
+                </td>  
             </tr>
+            <tr>
+                <td colspan="2" class="prerempli"></td>
+                    
+                <td class="tsamll">
+                    {{ $vehicule->usage }}
+                </td>  
+                <td class=""></td>  
+            </tr>
+            <tr>
+                <td colspan="2" class="prerempli"></td>
+                <td class="tsamll">
+                    {{ $vehicule->immatriculation }}
+                </td>  
+                <td class=""></td>  
+            </tr>
+            
         </table>
+
         <div class="milieu"></div>
+
        <table >
-           
             <tr>
                 <td colspan="2" ></td>
                 <td colspan="2" class="tsamll">
-                    {{ $vehicule->marque }}<br>
-                    {{ $vehicule->cartinspection}}<br>
-                    {{$vehicule->chassis ?? '-'}} <br>
+                    {{ $vehicule->marque }}
                 </td>
-                
             </tr>
-                <tr>
-                    <td colspan="2" class="prerempli"></td>
-                    <td class="sanspd tsamll">
-                        {{ $vehicule->moteur }}<br>
-                        {{ $vehicule->an_fabrication }}<br>
-                        {{ $vehicule->couleur }} <br>
-                        {{ $vehicule->puissance }}
-                    </td>  
-                     
+            <tr>
+                <td colspan="2" ></td>
+                <td colspan="2" class="tsamll">
+                    {{ $vehicule->cartinspection}}
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" ></td>
+                <td colspan="2" class="tsamll">
+                    {{$vehicule->chassis ?? '-'}}
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" class=""></td>
+                <td class="sanspd tsamll" colspan="">
+                    {{ $vehicule->moteur }}
+                </td> 
+                 <td></td>
+            </tr>
+            <tr>
+                <td colspan="2" class=""></td>
+                <td class="sanspd tsamll">
+                    {{ $vehicule->an_fabrication }}
+                </td> 
+                <td></td> 
+            </tr>
+            <tr>
+                <td colspan="2" class=""></td>
+                <td class="sanspd tsamll">
+                    {{ $vehicule->couleur }}
+                </td> 
+                <td></td> 
+            </tr>
+            <tr>
+                <td colspan="2" class=""></td>
+                <td class="sanspd tsamll">
+                    {{ $vehicule->puissance }}
+                </td>  
+                <td></td>
             </tr>
              <tr>
-                <th colspan="3" class="separateurV"></th>
-                <td class="signature">
+                <td colspan="2" class="separateurV"></td>
+                <td></td>
+                <td class="signature" >
                     <img src="{{public_path('sign/signature.jpg')}}" alt="" width="90" height="30">
                 </td> 
             </tr>
