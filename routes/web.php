@@ -50,6 +50,7 @@ Route::middleware(AuthMiddleWare::class)->group(function () {
         ->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/create', 'create')->name('create');
+            Route::get('/show/{id}', 'show')->name('show');
             Route::post('/', 'store')->name('store');
         });
 
@@ -57,6 +58,6 @@ Route::middleware(AuthMiddleWare::class)->group(function () {
         return view('dashboard.index');
     })->name('dashboard');
 
-    Route::get('/carte/{id?}', [CarteController::class, 'imprimerCarte'])
+    Route::get('/carte/{id}', [CarteController::class, 'imprimerCarte'])
         ->name('carte.imprimer');
 });

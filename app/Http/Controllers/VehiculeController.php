@@ -36,7 +36,8 @@ class VehiculeController extends Controller
      */
     public function store(Request $request)
     {
-        $vehicules = $this->service->store($request)['data'];
+        $vehicule = $this->service->store($request)['data'];
+        return to_route('vehicules.show', $vehicule->id);
         return to_route('vehicules.index')->with('success', 'Véhicule créé avec succès.');
     }
 
@@ -45,7 +46,11 @@ class VehiculeController extends Controller
      */
     public function show(int $id)
     {
-        return $this->service->show($id);
+        $vehicule = $this->service->show($id)['data'];
+        if(!$vehicule){
+            return back()->with('echec', "Impossible de trouvé ce véhicule");
+        }
+       return view('vehicules.show', compact('vehicule'));
     }
 
     /**

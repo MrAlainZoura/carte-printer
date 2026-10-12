@@ -474,6 +474,7 @@
                         <option value="">Sélectionner un type</option>
 
                         @foreach([
+                            'Moto',
                             'Berline',
                             'SUV',
                             'Pick-up',
@@ -481,7 +482,6 @@
                             'Camion',
                             'Bus',
                             'Minibus',
-                            'Moto',
                             'Autre'
                         ] as $type)
                             <option value="{{ $type }}"

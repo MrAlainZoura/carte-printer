@@ -92,7 +92,9 @@
                                     type="button"
                                     class="rounded-lg p-2 text-gray-500 transition hover:bg-blue-50 hover:text-blue-700"
                                     title="Voir les détails"
-                                    aria-label="Voir les détails de {{ $vehicule->immatriculation }}">
+                                    aria-label="Voir les détails de {{ $vehicule->immatriculation }}"
+                                    onclick="showVehicule('{{route('vehicules.show',['id'=>$vehicule->id])}}')"
+                                    >
 
                                     <svg class="h-5 w-5" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -100,7 +102,7 @@
                                             stroke-width="2"
                                             d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0c-1.5 4-5 6-9 6s-7.5-2-9-6c1.5-4 5-6 9-6s7.5 2 9 6z" />
                                     </svg>
-
+                                        voir
                                 </button>
 
                             </td>
@@ -147,3 +149,15 @@
 </div>
 
 @endsection
+
+<script>
+    
+    function showVehicule(url) {
+       if (!url || typeof url !== 'string') {
+           console.log("URL invalide. Impossible d'ouvrir cette page.");
+           return;
+       }
+        const fenetre = window.open(url, '_self');
+        
+    }
+</script>

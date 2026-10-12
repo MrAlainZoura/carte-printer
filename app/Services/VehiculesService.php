@@ -18,7 +18,7 @@ class VehiculesService implements VehiculeServiceInterface
 
     public function store(Request $request)
     {
-        //return dd($request->all());
+        // dd($request->all());
         $request->validate([
             'marque'            => 'required|string|max:255',
             'type'              => 'required|string|max:255',
