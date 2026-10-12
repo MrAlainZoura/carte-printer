@@ -9,7 +9,6 @@
 
     <script src="{{ asset('build/assets/app-BvRk9kiK.js') }}" defer></script>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <title>@yield('title', 'Administration') - Carte Rose</title>
 </head>

@@ -7,7 +7,6 @@
 
             <script src="{{ asset('build/assets/app-BvRk9kiK.js') }}" defer></script>
 
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         <title>Connexion | VCarte</title>
     </head>
