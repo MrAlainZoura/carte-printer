@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-        <link rel="stylesheet" href="{{ asset('build/assets/app-DCw2KBNL.css') }}">
-
+  <link rel="stylesheet" href="{{ asset('build/assets/app-DCw2KBNK.css) }}">
     <script src="{{ asset('build/assets/app-BvRk9kiK.js') }}" defer></script>
+
+
 
 
     <title>Accueil | VCarte</title>
