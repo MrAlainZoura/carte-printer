@@ -13,7 +13,7 @@
         margin: 0;
         padding: 0;
         font-family: Arial, sans-serif;
-        font-size: 8pt;
+        font-weight: bold;
     }
 
     .card {
@@ -68,12 +68,12 @@
         display:none;
     }
     .separateur{
-        padding: 4mm;
+        padding: 10mm;
         margin: 3mm;
     }
     .separateurV{
-        margin-top: 8mm;
-       /* border: 1px solid #eae363;*/
+        margin-top: 15mm;
+       border: 1px solid #eae363;
     }
     .milieu{
         position: absolute;
@@ -162,7 +162,7 @@
                     {{$vehicule->proprietaire->impot  ?? '-'}}
                 </td>
                 <td class="qr tdQR" rowspan="4">
-                   <img src="{{ $qrCode }}" alt="QR Code du véhicule" width="80" height="80">
+                   <img src="{{ $qrCode }}" alt="QR Code du véhicule" width="65" height="65">
                     <p class="dateOctroi">{{$vehicule->date}}</p> 
                 </td> 
             </tr>
@@ -245,7 +245,7 @@
                 <td></td>
             </tr>
              <tr>
-                <td colspan="2" class="separateurV"></td>
+                <td colspan="2" class=""></td>
                 <td></td>
                 <td class="signature" >
                     <img src="{{public_path('sign/signature.jpg')}}" alt="" width="90" height="30">
