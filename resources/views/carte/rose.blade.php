@@ -35,6 +35,7 @@
             width: 85.6mm;
             text-align: center;
             font-size: 7.5pt;
+            font-weight: bold;
             /*background: #ee7373;*/
         }
 
@@ -42,6 +43,7 @@
             position: absolute;
             top: 19mm;
             left: 38mm;
+            font-weight: bold;
             /*background: #7171e8;*/
         }
 
@@ -102,6 +104,9 @@
             overflow: hidden;
             white-space: nowrap;
         }
+        .pds{
+            margin-top: 5mm;
+        }
     </style>
 </head>
 <body>
@@ -111,10 +116,12 @@
         <div class="owner-block">
             <div class="line">{{ $vehicule->proprietaire?->nom_complet ?? $vehicule->proprietaire?->raison_sociale ?? '-' }}</div>
             <div class="line">{{ $vehicule->proprietaire?->adresse_physique ?? 'Non renseigné' }}</div>
-            <div class="line">{{ $vehicule->proprietaire?->impot ?? '' }}</div>
-            <div class="line">{{ $vehicule->an_circulation }}</div>
-            <div class="line">{{ $vehicule->usage }}</div>
-            <div class="line">{{ $vehicule->immatriculation }}</div>
+            <div class="line"></div>
+            <div class="pds">
+                <div class="line">{{ $vehicule->an_circulation }}</div>
+                <div class="line">{{ $vehicule->usage }}</div>
+                <div class="line">{{ $vehicule->immatriculation }}</div>
+            </div>
         </div>
 
         <div class="qr-block">
@@ -125,8 +132,8 @@
 
     <div class="page verso">
         <div class="verso-fields">
+            <div class="vline"></div>
             <div class="vline">{{ $vehicule->marque }}</div>
-            <div class="vline">{{ $vehicule->cartinspection }}</div>
             <div class="vline">{{ $vehicule->chassis ?? '-' }}</div>
             <div class="vline">{{ $vehicule->moteur }}</div>
             <div class="vline">{{ $vehicule->an_fabrication }}</div>
