@@ -30,7 +30,7 @@
 
         .recto .dgrk {
             position: absolute;
-            top: 10mm;
+            top: 15mm;
             left: 0;
             width: 85.6mm;
             text-align: center;
@@ -40,8 +40,8 @@
 
         .owner-block {
             position: absolute;
-            top: 14mm;
-            left: 40mm;
+            top: 20mm;
+            left: 38mm;
             /*background: #7171e8;*/
         }
 
@@ -54,8 +54,8 @@
 
         .qr-block {
             position: absolute;
-            top: 30mm;
-            left: 68mm;
+            top: 35mm;
+            left: 60mm;
             width: 14mm;
             text-align: center;
             /*background: #e4eb7f;*/
@@ -63,8 +63,8 @@
 
         .qr-block img {
             display: block;
-            width: 17mm;
-            height: 17mm;
+            width: 19mm;
+            height: 19mm;
         }
 
         .date-octroi {
@@ -79,7 +79,7 @@
 
         .verso-fields {
             position: absolute;
-            top: 11mm;
+            top: 7mm;
             left: 42mm;
             width: 22mm;
             padding: 2;
