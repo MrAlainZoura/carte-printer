@@ -47,9 +47,21 @@ class CarteService implements CarteServiceInterface
         $vehicule->DGRK = $DGRK;
         $vehicule->date = $create_at->format('d/m/Y');
         $qrCode = self::genereQR($codeQR);
-        $html = view('carte.vehicule', compact('vehicule', 'qrCode'))->render();
 
-        $mpdf->WriteHTML($html);
+        // Recto (prerempli1) puis verso (prerempli2) — 2 faces CR80
+        $mpdf->WriteHTML(view('carte.rose', [
+            'vehicule' => $vehicule,
+            'qrCode' => $qrCode,
+            'face' => 'recto',
+        ])->render());
+
+        $mpdf->AddPage();
+
+        $mpdf->WriteHTML(view('carte.rose', [
+            'vehicule' => $vehicule,
+            'qrCode' => $qrCode,
+            'face' => 'verso',
+        ])->render());
 
         return response(
             $mpdf->Output('', 'S'),

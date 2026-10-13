@@ -13,7 +13,6 @@
         margin: 0;
         padding: 0;
         font-family: Arial, sans-serif;
-        font-weight: bold;
     }
 
     .card {
@@ -35,7 +34,7 @@
 
     }
     tr, td{
-        /*border: 1px solid black;*/
+        border: 1px solid black;
     }
 
     .photo{
@@ -68,7 +67,7 @@
         display:none;
     }
     .separateur{
-        padding: 10mm;
+        padding: 6mm;
         margin: 3mm;
     }
     .separateurV{
@@ -97,12 +96,10 @@
       /*  background-color: #fa02c4;*/
     }
     .tsamll{
-        font-size: 12px;
-        font-weight: bold;
+        font-size: 9px;
     }
     .dateOctroi{
-        font-size: 9px;
-        font-weight: bold;
+        font-size: 7px;
     }
 
     .signature{
@@ -121,8 +118,13 @@
         justify-content: center;
         text-align: center;
     }
+    .pdl{
+        padding-left: 5mm;
+    }
+    .mgt{
+        margin-top:10mm ;
+    }
    
-
 </style>
 <!DOCTYPE html>
 <html lang="en">
@@ -133,67 +135,53 @@
 </head>
 <body>
     <div class="card">
-        <table >
-            <tr>
-                <th colspan="4" class="separateur"></th>
-            </tr>
-            <tr>
-                <td colspan="4" class="tsamll tcenter">{{$vehicule->DGRK}}</td>
-            </tr>
-            <tr>
-                <td colspan="2" ></td>
-                <td colspan="" class="tsamll">
-                    {{ $vehicule->proprietaire?->nom_complet ??  $vehicule->proprietaire?->raison_sociale }}
-                </td>
-                <td></td>
-            </tr>
+        <div class="separateur"></div>
+        <table>
+        <tr>
+            <td colspan="4" class="tsamll tcenter">
+                {{ $vehicule->DGRK }}
+            </td>
+        </tr>
 
-            <tr>
-                <td colspan="2" ></td>
-                <td colspan="" class="tsamll">
-                    {{ $vehicule->proprietaire?->adresse_physique ?? 'Non renseigné' }}
-                </td>
-                <td></td>
-            </tr>
+    <tr>
+        <td></td>
+        <td></td>
+        <td rowspan="2" class="pdl tsamll">
+            {{ $vehicule->proprietaire?->adresse_physique ?? '-' }} <br>
+            {{ $vehicule->proprietaire?->impot ?? '-' }} <br>
+            {{ $vehicule->an_circulation ?? '-' }} <br>
+            {{ $vehicule->usage ?? '-' }} <br>
+            {{ $vehicule->immatriculation ?? '-' }}
+        </td>
+        <td class="mgt"></td>
+    </tr>
 
-            <tr>
-                <td colspan="2" ></td>
-                <td colspan="" class="tsamll">
-                    {{$vehicule->proprietaire->impot  ?? '-'}}
-                </td>
-                <td class="qr tdQR" rowspan="4">
-                   <img src="{{ $qrCode }}" alt="QR Code du véhicule" width="65" height="65">
-                    <p class="dateOctroi">{{$vehicule->date}}</p> 
-                </td> 
-            </tr>
+    <tr>
+        <td></td>
 
-            <tr>
-                <td colspan="2" class="prerempli"></td>
-                    
-                <td class="tsamll">
-                    {{ $vehicule->an_circulation }}
-                </td>  
-                <td class="">
-                       
-                </td>  
-            </tr>
-            <tr>
-                <td colspan="2" class="prerempli"></td>
-                    
-                <td class="tsamll">
-                    {{ $vehicule->usage }}
-                </td>  
-                <td class=""></td>  
-            </tr>
-            <tr>
-                <td colspan="2" class="prerempli"></td>
-                <td class="tsamll">
-                    {{ $vehicule->immatriculation }}
-                </td>  
-                <td class=""></td>  
-            </tr>
-            
-        </table>
+        <td></td>
+
+        <td class="qr tdQR">
+            <div class="mgt">
+
+                <img src="{{ $qrCode }}"
+                     alt="QR Code du véhicule"
+                     width="50"
+                     height="50">
+            </div>
+        </td>
+    </tr>
+
+    <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><p class="dateOctroi">
+                {{ $vehicule->date }}
+            </p></td>
+    </tr>
+</table>
+
 
         <div class="milieu"></div>
 
