@@ -34,27 +34,28 @@
             left: 0;
             width: 85.6mm;
             text-align: center;
-            font-size: 9pt;
+            font-size: 7.5pt;
             /*background: #ee7373;*/
         }
 
         .owner-block {
             position: absolute;
-            top: 17mm;
+            top: 19mm;
             left: 38mm;
             /*background: #7171e8;*/
         }
 
         .line {
-            height: 5mm;
+            /*height: 5mm;*/
             /*line-height: 5mm;*/
+            margin-bottom: 1mm;
             overflow: hidden;
             white-space: nowrap;
         }
 
         .qr-block {
             position: absolute;
-            top: 30mm;
+            top: 32.2mm;
             left: 65mm;
             width: 14mm;
             text-align: center;
@@ -89,7 +90,7 @@
         .verso-signature {
             position: absolute;
             top: 40mm;
-            left: 60mm;
+            left: 62mm;
             width: 18mm;
             height: 9mm;
             /*background: #98c6d0;*/
