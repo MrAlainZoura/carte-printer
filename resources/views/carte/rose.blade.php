@@ -82,7 +82,7 @@
 
         .verso-fields {
             position: absolute;
-            top: 7mm;
+            top: 8mm;
             left: 42mm;
             width: 22mm;
             padding: 2;
@@ -105,7 +105,7 @@
             white-space: nowrap;
         }
         .pds{
-            margin-top: 5mm;
+            margin-top: 6mm;
         }
     </style>
 </head>
@@ -132,8 +132,8 @@
 
     <div class="page verso">
         <div class="verso-fields">
-            <div class="vline"></div>
             <div class="vline">{{ $vehicule->marque }}</div>
+            <div class="vline">-</div>
             <div class="vline">{{ $vehicule->chassis ?? '-' }}</div>
             <div class="vline">{{ $vehicule->moteur }}</div>
             <div class="vline">{{ $vehicule->an_fabrication }}</div>
