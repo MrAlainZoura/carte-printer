@@ -30,17 +30,17 @@
 
         .recto .dgrk {
             position: absolute;
-            top: 15mm;
+            top: 13mm;
             left: 0;
             width: 85.6mm;
             text-align: center;
-            font-size: 8pt;
+            font-size: 9pt;
             /*background: #ee7373;*/
         }
 
         .owner-block {
             position: absolute;
-            top: 20mm;
+            top: 17mm;
             left: 38mm;
             /*background: #7171e8;*/
         }
@@ -54,8 +54,8 @@
 
         .qr-block {
             position: absolute;
-            top: 35mm;
-            left: 60mm;
+            top: 30mm;
+            left: 65mm;
             width: 14mm;
             text-align: center;
             /*background: #e4eb7f;*/
@@ -83,6 +83,7 @@
             left: 42mm;
             width: 22mm;
             padding: 2;
+            font-weight: bold;
         }
 
         .verso-signature {
