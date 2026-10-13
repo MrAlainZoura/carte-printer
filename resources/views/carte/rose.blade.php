@@ -1,16 +1,3 @@
-{{--
-  Carte Rose CR80 — calée sur les aperçus WhatsApp (04.54.48 / 04.54.49).
-
-  Recto (mm) :
-    DGRK ≈ 15 | valeurs x≈42 | lignes 19/24/29/34/39/44 (pas 5)
-    QR ≈ 72×31, 14×14 | date sous QR
-
-  Verso (mm) :
-    valeurs x≈42 | 1re ligne ≈12 | pas ≈3.2 | signature bas-droite ≈ y40+
---}}
-@php
-    $face = $face ?? 'recto';
-@endphp
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -22,45 +9,62 @@
             margin: 0;
         }
 
+        html,
         body {
+            width: 85.6mm;
+            height: 53.98mm;
             margin: 0;
             padding: 0;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: Arial, sans-serif;
             font-size: 7.5pt;
             font-weight: bold;
             color: #000;
         }
 
-        table.card {
+        .page {
+            position: relative;
             width: 85.6mm;
-            border-collapse: collapse;
+            height: 53.98mm;
+            overflow: hidden;
         }
 
-        table.card td {
-            padding: 0;
-            margin: 0;
-            vertical-align: top;
-            border: 0;
-        }
-
-        .dgrk {
+        .recto .dgrk {
+            position: absolute;
+            top: 10mm;
+            left: 0;
+            width: 85.6mm;
             text-align: center;
-            font-size: 7pt;
-            font-weight: bold;
+            font-size: 8pt;
+            /*background: #ee7373;*/
+        }
+
+        .owner-block {
+            position: absolute;
+            top: 14mm;
+            left: 40mm;
+            /*background: #7171e8;*/
         }
 
         .line {
             height: 5mm;
-            line-height: 5mm;
+            /*line-height: 5mm;*/
             overflow: hidden;
             white-space: nowrap;
         }
 
-        .vline {
-            height: 3.2mm;
-            line-height: 3.2mm;
-            overflow: hidden;
-            white-space: nowrap;
+        .qr-block {
+            position: absolute;
+            top: 30mm;
+            left: 68mm;
+            width: 14mm;
+            text-align: center;
+            /*background: #e4eb7f;*/
+        }
+
+        .qr-block img {
+            display: block;
+            width: 17mm;
+            height: 17mm;
         }
 
         .date-octroi {
@@ -68,67 +72,70 @@
             font-weight: bold;
             text-align: center;
         }
+
+        .verso {
+            page-break-before: always;
+        }
+
+        .verso-fields {
+            position: absolute;
+            top: 11mm;
+            left: 42mm;
+            width: 22mm;
+            padding: 2;
+        }
+
+        .verso-signature {
+            position: absolute;
+            top: 40mm;
+            left: 60mm;
+            width: 18mm;
+            height: 9mm;
+            /*background: #98c6d0;*/
+        }
+
+        .vline {
+            /*height: 5mm;
+            line-height: 3.2mm;*/
+            overflow: hidden;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
+    <div class="page recto">
+        <div class="dgrk">{{ $vehicule->DGRK }}</div>
 
-@if ($face === 'recto')
-    <table class="card">
-        {{-- Espace sous bandeau bleu → DGRK vers y≈15mm --}}
-        <tr>
-            <td colspan="3" class="dgrk" style="height:15mm; vertical-align:bottom; padding-bottom:1mm;">
-                {{ $vehicule->DGRK }}
-            </td>
-        </tr>
-        <tr>
-            {{-- Libellés préimprimés jusqu'à ~38–40mm ; valeurs à x≈42mm --}}
-            <td style="width:42mm;">&nbsp;</td>
-            <td style="width:16mm;">
-                <div class="line">{{ $vehicule->proprietaire?->nom_complet ?? $vehicule->proprietaire?->raison_sociale ?? '-' }}</div>
-                <div class="line">{{ $vehicule->proprietaire?->adresse_physique ?? 'Non renseigné' }}</div>
-                <div class="line">{{ $vehicule->proprietaire?->impot ?? '' }}</div>
-                <div class="line">{{ $vehicule->an_circulation }}</div>
-                <div class="line">{{ $vehicule->usage }}</div>
-                <div class="line">{{ $vehicule->immatriculation }}</div>
-            </td>
-            <td style="width:27.6mm; text-align:center; padding-right:1mm;">
-                {{-- QR à y≈31mm (après ~16mm depuis début des lignes à y≈16) --}}
-                <div style="height:15mm; line-height:15mm; font-size:1pt;">&nbsp;</div>
-                <img src="{{ $qrCode }}" alt="QR" width="53" height="53" style="width:14mm; height:14mm;"><br>
-                <span class="date-octroi">{{ $vehicule->date }}</span>
-            </td>
-        </tr>
-    </table>
-@endif
+        <div class="owner-block">
+            <div class="line">{{ $vehicule->proprietaire?->nom_complet ?? $vehicule->proprietaire?->raison_sociale ?? '-' }}</div>
+            <div class="line">{{ $vehicule->proprietaire?->adresse_physique ?? 'Non renseigné' }}</div>
+            <div class="line">{{ $vehicule->proprietaire?->impot ?? '' }}</div>
+            <div class="line">{{ $vehicule->an_circulation }}</div>
+            <div class="line">{{ $vehicule->usage }}</div>
+            <div class="line">{{ $vehicule->immatriculation }}</div>
+        </div>
 
-@if ($face === 'verso')
-    <table class="card">
-        {{-- Sous « IDENTIFICATION MOTO » → 1re ligne ≈12mm --}}
-        <tr>
-            <td colspan="3" style="height:11mm;">&nbsp;</td>
-        </tr>
-        <tr>
-            <td style="width:42mm;">&nbsp;</td>
-            <td style="width:22mm;">
-                <div class="vline">{{ $vehicule->marque }}</div>
-                <div class="vline">{{ $vehicule->cartinspection }}</div>
-                <div class="vline">{{ $vehicule->chassis ?? '-' }}</div>
-                <div class="vline">{{ $vehicule->moteur }}</div>
-                <div class="vline">{{ $vehicule->an_fabrication }}</div>
-                <div class="vline">{{ $vehicule->couleur }}</div>
-                <div class="vline">{{ $vehicule->puissance }}</div>
-            </td>
-            <td style="width:21.6mm;">&nbsp;</td>
-        </tr>
-        {{-- Zone Remarques préimprimée ; signature dans encadré blanc bas-droite --}}
-        <tr>
-            <td colspan="2" style="height:9mm;">&nbsp;</td>
-            <td style="width:21.6mm; height:12mm; text-align:center; vertical-align:middle; padding-right:2mm;">
-                <img src="{{ public_path('sign/signature.jpg') }}" alt="Signature" width="68" height="34" style="width:18mm; height:9mm;">
-            </td>
-        </tr>
-    </table>
-@endif
+        <div class="qr-block">
+            <img src="{{ $qrCode }}" alt="QR">
+            <div class="date-octroi">{{ $vehicule->date }}</div>
+        </div>
+    </div>
 
+    <div class="page verso">
+        <div class="verso-fields">
+            <div class="vline">{{ $vehicule->marque }}</div>
+            <div class="vline">{{ $vehicule->cartinspection }}</div>
+            <div class="vline">{{ $vehicule->chassis ?? '-' }}</div>
+            <div class="vline">{{ $vehicule->moteur }}</div>
+            <div class="vline">{{ $vehicule->an_fabrication }}</div>
+            <div class="vline">{{ $vehicule->couleur }}</div>
+            <div class="vline">{{ $vehicule->puissance }}</div>
+        </div>
+        <div class="verso-signature">
+            <img src="data:image/jpg;base64,{{base64_encode(file_get_contents(public_path('sign/signature.jpg'))) }}" 
+            alt="logo" width="68" height="34" 
+            style="width:23mm; height:9mm;">
+        </div>
+    </div>
 </body>
 </html>

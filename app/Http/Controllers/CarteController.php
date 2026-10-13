@@ -3,21 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Carte;
-use App\Models\Vehicule;
 use App\Services\CarteService;
 use Illuminate\Http\Request;
-use Mpdf\Mpdf;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
-
 
 class CarteController extends Controller
 {
     protected CarteService $service;
+
     public function __construct(CarteService $service)
     {
         $this->service = $service;
     }
-    
+
     /**
      * Display a listing of the resource.
      */
@@ -74,16 +71,14 @@ class CarteController extends Controller
         //
     }
 
-  
-
     public function imprimerCarte(int $id = 1)
     {
-        $status = $this->service::print($id);
-        if (is_array($this->service::print($id))){
-            return back()->with('error',$status['error']);
+        $result = $this->service::print($id);
+
+        if (is_array($result)) {
+            return back()->with('error', $result['error']);
         }
-        return $this->service::print($id);
+
+        return $result;
     }
-
-
 }

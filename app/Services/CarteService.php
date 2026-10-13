@@ -3,84 +3,75 @@
 namespace App\Services;
 
 use App\Contracts\CarteServiceInterface;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Mpdf\Mpdf;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class CarteService implements CarteServiceInterface
 {
-    static public function print(int $id)
+    public static function print(int $id)
     {
         $vehicule = VehiculesService::show($id)['data'];
-        
-        if(!$vehicule){
+
+        if (! $vehicule) {
             return [
-                'status'=>false,
-                'error'=>"Nous avons du mal à trouver ce véhicule"
+                'status' => false,
+                'error' => 'Nous avons du mal à trouver ce véhicule',
             ];
         }
+
+        $proprietaire = $vehicule->proprietaire;
         $codeQR = [
-            'matricule' =>$vehicule->immatriculation,
-            'chassis'   =>$vehicule->chassis,
-            'moteur'    =>$vehicule->moteur,
-            'marque'    =>$vehicule->marque,
-            'type'      =>$vehicule->type,
+            'matricule' => $vehicule->immatriculation,
+            'chassis' => $vehicule->chassis,
+            'moteur' => $vehicule->moteur,
+            'marque' => $vehicule->marque,
+            'type' => $vehicule->type,
             'puissance' => $vehicule->puissance,
-            'couleur'   =>$vehicule->couleur,
-            'usage'     =>$vehicule->usage,
-            'cartinspection'    =>$vehicule->cartinspection,
-            'Annee circulation' =>$vehicule->an_circulation,
-            'proprietaire'      =>$vehicule->proprietaire->nom_complet ?? $vehicule->proprietaire->raison_social,
-            'Adresse'           =>$vehicule->proprietaire->adresse_physique
+            'couleur' => $vehicule->couleur,
+            'usage' => $vehicule->usage,
+            'cartinspection' => $vehicule->cartinspection,
+            'Annee circulation' => $vehicule->an_circulation,
+            'proprietaire' => $proprietaire?->nom_complet ?? $proprietaire?->raison_sociale,
+            'Adresse' => $proprietaire?->adresse_physique,
         ];
-        $mpdf = new Mpdf([
-            'format' => [85.6, 53.98], // Format CR80 en mm
-            'margin_left' => 0,
-            'margin_right' => 0,
-            'margin_top' => 0,
-            'margin_bottom' => 0,
-        ]);
-        $create_at =Carbon::parse($vehicule->created_at);
+
+        $createAt = Carbon::parse($vehicule->created_at);
         $ordre = count(VehiculesService::all()[1]);
-        $DGRK = 'DGRK/'.str_pad($ordre, 4, '0', STR_PAD_LEFT).$create_at->format('d/m/Y');
-        $vehicule->DGRK = $DGRK;
-        $vehicule->date = $create_at->format('d/m/Y');
-        $qrCode = self::genereQR($codeQR);
 
-        // Recto (prerempli1) puis verso (prerempli2) — 2 faces CR80
-        $mpdf->WriteHTML(view('carte.rose', [
+        $vehicule->DGRK = 'DGRK/'.str_pad($ordre, 4, '0', STR_PAD_LEFT)
+            .$createAt->format('d/m/Y');
+        $vehicule->date = $createAt->format('d/m/Y');
+
+        $pdf = Pdf::loadView('carte.rose', [
             'vehicule' => $vehicule,
-            'qrCode' => $qrCode,
-            'face' => 'recto',
-        ])->render());
+            'qrCode' => self::genereQR($codeQR),
+        ]);
 
-        $mpdf->AddPage();
-
-        $mpdf->WriteHTML(view('carte.rose', [
-            'vehicule' => $vehicule,
-            'qrCode' => $qrCode,
-            'face' => 'verso',
-        ])->render());
+        $pdf->setPaper([0, 0, 242.65, 153.01]);
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+            'defaultFont' => 'DejaVu Sans',
+        ]);
 
         return response(
-            $mpdf->Output('', 'S'),
+            $pdf->output(),
             200,
             [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="carte.pdf"'
+                'Content-Disposition' => 'inline; filename="carte.pdf"',
             ]
         );
-
     }
-    static public function genereQR(array $contenu){
-            $contenu = json_encode($contenu);
 
-            return 'data:image/png;base64,' . base64_encode(
-                QrCode::format('png')
-                    ->size(300)
-                    ->margin(1)
-                    ->generate($contenu)
-            );
+    public static function genereQR(array $contenu)
+    {
+        return 'data:image/png;base64,'.base64_encode(
+            QrCode::format('png')
+                ->size(300)
+                ->margin(1)
+                ->generate(json_encode($contenu))
+        );
     }
 }
