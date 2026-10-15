@@ -3,103 +3,107 @@
 namespace App\Services;
 
 use App\Contracts\VehiculeServiceInterface;
+use App\Models\CarteRose;
+use App\Models\Plaque;
 use App\Models\PostProduit;
-use App\Models\Propietaire;
+use App\Models\PostTravail;
 use App\Models\Vehicule;
-use App\Services\ProprietaireService;
+use App\Support\CurrentPostTravail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class VehiculesService implements VehiculeServiceInterface
 {
-    
+    private const NON_RENSEIGNE = 'Non renseigne';
 
     public function store(Request $request)
     {
-        // dd($request->all());
-        $request->validate([
-            'marque'            => 'required|string|max:255',
-            'type'              => 'required|string|max:255',
-            'couleur'           => 'required|string|max:255',
-            'immatriculation'   => 'required|string|max:255',
-            'usage'             => 'required|string|max:255',
-            'etat'              => 'required|string|max:255',
-            'an_fabrication'    => 'required|string|max:255',
-            'an_circulation'    => 'required|string|max:255',
-            'moteur'            => 'required|string|max:255',
-            'puissance'         => 'required|string|max:255',
-            'chassis'           => 'required|string|max:255',
-            'cartinspection'    => 'required|string|max:255',
+        $request->merge([
+            'creer_proprietaire' => $request->boolean('creer_proprietaire') ? '1' : '0',
+        ]);
 
-            'creer_proprietaire'        => 'required|in:0,1',
-            'nouveau_proprietaire'      => 'required_if:creer_proprietaire,1|array',
+        $request->validate([
+            'marque' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'couleur' => 'required|string|max:255',
+            'immatriculation' => 'required|string|max:255',
+            'usage' => 'required|string|max:255',
+            'etat' => 'nullable|string|max:255',
+            'an_fabrication' => 'nullable|string|max:255',
+            'an_circulation' => 'nullable|string|max:255',
+            'moteur' => 'nullable|string|max:255',
+            'puissance' => 'nullable|string|max:255',
+            'chassis' => 'nullable|string|max:255',
+            'cartinspection' => 'nullable|string|max:255',
+            'creer_proprietaire' => 'required|in:0,1',
+            'propietaire_id' => 'required_if:creer_proprietaire,0|nullable|exists:propietaires,id',
+            'nouveau_proprietaire' => 'required_if:creer_proprietaire,1|nullable|array',
+        ]);
+
+        $proprietaireId = null;
+
+        if ($request->creer_proprietaire === '1') {
+            $request->validate([
+                'nouveau_proprietaire.type' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    Rule::in([
+                        'Entreprise',
+                        'Personne Physique',
+                        'Organisation',
+                        'Autres',
+                    ]),
+                ],
+                'nouveau_proprietaire.adresse_physique' => 'required|string|max:255',
+                'nouveau_proprietaire.telephone' => 'required|string|max:255',
+                'nouveau_proprietaire.impot' => [
+                    Rule::requiredIf(
+                        $request->input('nouveau_proprietaire.type') !== 'Personne Physique'
+                    ),
+                    'nullable',
+                    'string',
+                    'max:255',
+                ],
+                'nouveau_proprietaire.raison_sociale' => [
+                    Rule::requiredIf(
+                        $request->input('nouveau_proprietaire.type') !== 'Personne Physique'
+                    ),
+                    'nullable',
+                    'string',
+                    'max:255',
+                ],
+                'nouveau_proprietaire.nom_complet' => [
+                    Rule::requiredIf(
+                        $request->input('nouveau_proprietaire.type') === 'Personne Physique'
+                    ),
+                    'nullable',
+                    'string',
+                    'max:255',
+                ],
             ]);
 
-        if($request->creer_proprietaire == true){
-            //dd('next', $request->nouveau_proprietaire);
-                $request->validate([
-                    'nouveau_proprietaire.type' => [
-                        'required',
-                        'string',
-                        'max:255',
-                        Rule::in([
-                            'Entreprise',
-                            'Personne Physique',
-                            'Organisation',
-                            'Autres',
-                        ]),
-                    ],
-
-                    'nouveau_proprietaire.adresse_physique'  => 'required|string|max:255',
-                    'nouveau_proprietaire.telephone'         => 'required|string|max:255',
-
-                    'nouveau_proprietaire.impot'             => [
-                        Rule::requiredIf(
-                            $request->input('nouveau_proprietaire.type') !== 'Personne Physique'
-                        ),
-                        'string',
-                        'max:255',
-                    ],
-
-                    'nouveau_proprietaire.raison_sociale' => [
-                        Rule::requiredIf(
-                            $request->input('nouveau_proprietaire.type') !== 'Personne Physique'
-                        ),
-                        'string',
-                        'max:255',
-                    ],
-
-                    'nouveau_proprietaire.nom_complet' => [
-                        Rule::requiredIf(
-                            $request->input('nouveau_proprietaire.type') === 'Personne Physique'
-                        ),
-                        'string',
-                        'max:255',
-                    ],
-                ]);
             $tel = $request->input('nouveau_proprietaire.telephone');
             $checkProprio = ProprietaireService::getByTel($tel);
-            $dataNewProprietaire = $request->only(['nouveau_proprietaire']);
 
-            //dd($dataNewProprietaire["nouveau_proprietaire"], 'chien');
-
-            $requestProprietaire = new Request(
-                $dataNewProprietaire['nouveau_proprietaire']
-            );
-
-            if($checkProprio != null){
+            if ($checkProprio != null) {
                 $proprietaireId = $checkProprio->id;
-            }else{
+            } else {
+                $requestProprietaire = new Request($request->input('nouveau_proprietaire'));
                 $saveProprietaire = ProprietaireService::store($requestProprietaire);
                 $proprietaireId = $saveProprietaire['data']->id;
             }
         }
-        
 
-        $proprietaire_id = $proprietaireId ?? null;
+        $postId = CurrentPostTravail::id()
+            ?? Auth::user()->defaultPostTravail()?->id;
+
+        abort_unless($postId, 422, 'Aucun poste de travail sélectionné.');
+
+        $post = PostTravail::query()->findOrFail($postId);
 
         $data = $request->only([
             'propietaire_id',
@@ -114,105 +118,224 @@ class VehiculesService implements VehiculeServiceInterface
             'moteur',
             'puissance',
             'chassis',
-            'cartinspection'
+            'cartinspection',
         ]);
-        $data['propietaire_id'] = $data['propietaire_id'] ?? $proprietaire_id;
-        $data['user_id']=Auth::user()->id;
-        $data['post_travail_id']= 1;
-        
-        $vehicule = Vehicule::create($data);
+        $data['propietaire_id'] = $data['propietaire_id'] ?? $proprietaireId;
+        $data['post_travail_id'] = $post->id;
 
-        if($vehicule){
-            PostProduit::query()->decrement('quantite', 1);
-            return [
-                'message'   => 'Véhicule créé.',
-                'data'  => $vehicule
-            ];
+        $vehicule = DB::transaction(function () use ($request, $data, $post) {
+            $vehicule = Vehicule::create($data);
+
+            $this->createPlaqueForVehicule($vehicule, $request, $post);
+            $this->createCarteRoseForVehicule($vehicule, $request, $post);
+
+            PostProduit::query()
+                ->where('post_travail_id', $post->id)
+                ->where('quantite', '>', 0)
+                ->orderBy('id')
+                ->limit(2)
+                ->decrement('quantite', 1);
+
+            return $vehicule->load(['proprietaire', 'plaque', 'carteRoses', 'postTravail']);
+        });
+
+        return [
+            'message' => 'Véhicule, plaque et carte rose créés.',
+            'data' => $vehicule,
+        ];
+    }
+
+    private function createPlaqueForVehicule(Vehicule $vehicule, Request $request, PostTravail $post): Plaque
+    {
+        $code = $this->valueOrDefault(
+            $request->input('immatriculation') ?: $request->input('plaque_code')
+        );
+
+        if (Plaque::query()->where('code', $code)->exists()) {
+            $code = $code.'-'.$vehicule->id;
         }
+
+        return Plaque::create([
+            'post_travail_id' => $post->id,
+            'code' => $code,
+            'ville' => $this->nullableFromRequestOrPost(
+                $request->input('plaque_ville'),
+                $post->ville
+            ),
+            'serie' => $this->nullableFromRequestOrPost($request->input('plaque_serie')),
+            'statut' => $this->valueOrDefault($request->input('plaque_statut'), 'attribuee'),
+            'vehicule_id' => $vehicule->id,
+            'date_attribution' => now()->toDateString(),
+        ]);
+    }
+
+    private function createCarteRoseForVehicule(Vehicule $vehicule, Request $request, PostTravail $post): CarteRose
+    {
+        $numero = trim((string) $request->input('carte_numero'));
+        if ($numero === '' || CarteRose::query()->where('numero', $numero)->exists()) {
+            $numero = $this->generateCarteNumero($vehicule);
+        }
+
+        return CarteRose::create([
+            'post_travail_id' => $post->id,
+            'vehicule_id' => $vehicule->id,
+            'user_id' => Auth::id(),
+            'libele' => $this->valueOrDefault($request->input('carte_libele'), 'Carte Rose'),
+            'numero' => $numero,
+            'date_octroi' => now()->toDateString(),
+            'date_expiration' => null,
+            'statut' => $this->valueOrDefault($request->input('carte_statut'), 'active'),
+            'qr_token' => (string) Str::uuid(),
+            'observations' => $this->nullableFromRequestOrPost($request->input('carte_observations')),
+        ]);
+    }
+
+    private function generateCarteNumero(Vehicule $vehicule): string
+    {
+        $ordre = CarteRose::query()->count() + 1;
+
+        return 'DGRK/'.str_pad((string) $ordre, 4, '0', STR_PAD_LEFT)
+            .'/'.$vehicule->id
+            .'/'.now()->format('dmY');
+    }
+
+    private function valueOrDefault(?string $value, ?string $fallback = null): string
+    {
+        $value = is_string($value) ? trim($value) : '';
+
+        if ($value !== '') {
+            return $value;
+        }
+
+        $fallback = is_string($fallback) ? trim($fallback) : '';
+
+        return $fallback !== '' ? $fallback : self::NON_RENSEIGNE;
+    }
+
+    private function nullableFromRequestOrPost(?string $requestValue, ?string $postValue = null): ?string
+    {
+        $requestValue = is_string($requestValue) ? trim($requestValue) : '';
+        if ($requestValue !== '') {
+            return $requestValue;
+        }
+
+        $postValue = is_string($postValue) ? trim($postValue) : '';
+
+        return $postValue !== '' ? $postValue : null;
     }
 
     public function create()
     {
         $proprietaires = ProprietaireService::index()['data'];
+
         return view('vehicules.create', compact('proprietaires'));
     }
 
-    static public function show(int $id):array
+    public static function show(int $id): array
     {
-        $vehicule = Vehicule::with('proprietaire')->find($id);
-        if(!$vehicule) {
+        $vehicule = Vehicule::with(['proprietaire', 'plaque', 'carteRoses', 'postTravail'])
+            ->find($id);
+
+        if (! $vehicule) {
             return [
                 'message' => 'Véhicule non trouvé',
-                'data' => null
+                'data' => null,
             ];
         }
+
         return [
-                'message' => 'Véhicule trouvé',
-                'data' => $vehicule
-        ];    
+            'message' => 'Véhicule trouvé',
+            'data' => $vehicule,
+        ];
     }
 
-    static public function all():array
+    public static function all(): array
     {
-        //dd(Vehicule::with('proprietaire')->first());
-        $vehicules = Vehicule::with('proprietaire')->latest();
-        return [$vehicules->paginate(10),$vehicules->get() ]; // view('vehicules.index', compact('vehicules'));
+        $base = Vehicule::with('proprietaire')->latest();
+
+        if ($postId = CurrentPostTravail::id()) {
+            $base->where('post_travail_id', $postId);
+        }
+
+        return [
+            (clone $base)->paginate(10),
+            (clone $base)->get(),
+        ];
     }
+
     public function delete(int $id)
     {
         $vehicule = Vehicule::find($id);
-        if(!$vehicule) {
+        if (! $vehicule) {
             return [
                 'message' => 'Véhicule non trouvé',
-                'data' => null
+                'data' => null,
             ];
         }
         $vehicule->delete();
+
         return [
             'message' => 'Véhicule supprimé avec succès',
-            'data' => null
+            'data' => null,
         ];
     }
 
     public function edit(int $id)
     {
-        $vehicule = Vehicule::find($id);
-        if(!$vehicule) {
-            return [
-                'message' => 'Véhicule non trouvé',
-                'data' => null
-            ];
+        $vehicule = Vehicule::with(['proprietaire', 'plaque', 'carteRoses'])->find($id);
+        if (! $vehicule) {
+            return back()->with('echec', 'Véhicule non trouvé');
         }
+
         $proprietaires = ProprietaireService::index()['data'];
+
         return view('vehicules.edit', compact('vehicule', 'proprietaires'));
     }
-    public function update(int $id, Request $data)
+
+    public function update(int $id, Request $request)
     {
-        $vehicule = Vehicule::find($id);
-        if(!$vehicule) {
-            return [
-                'message' => 'Véhicule non trouvé',
-                'data' => null
-            ];
+        $vehicule = Vehicule::with(['plaque', 'carteRoses'])->find($id);
+        if (! $vehicule) {
+            return back()->with('echec', 'Véhicule non trouvé');
         }
-        $vehicule->update($data->only([
-            'propietaire_id',
-            'marque',
-            'type',
-            'couleur',
-            'immatriculation',
-            'usage',
-            'etat',
-            'an_fabrication',
-            'an_circulation',
-            'moteur',
-            'puissance',
-            'chassis',
-            'cartinspection'
-        ]));
-        return [
-            'message' => 'Véhicule mis à jour avec succès',
-            'data' => $vehicule
-        ];
+
+        $validated = $request->validate([
+            'propietaire_id' => 'required|exists:propietaires,id',
+            'marque' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'couleur' => 'required|string|max:255',
+            'immatriculation' => 'required|string|max:255',
+            'usage' => 'required|string|max:255',
+            'etat' => 'nullable|string|max:255',
+            'an_fabrication' => 'nullable|string|max:255',
+            'an_circulation' => 'nullable|string|max:255',
+            'moteur' => 'nullable|string|max:255',
+            'puissance' => 'nullable|string|max:255',
+            'chassis' => 'nullable|string|max:255',
+            'cartinspection' => 'nullable|string|max:255',
+        ]);
+
+        DB::transaction(function () use ($vehicule, $validated) {
+            $vehicule->update($validated);
+
+            if ($vehicule->plaque) {
+                $code = $this->valueOrDefault($validated['immatriculation']);
+                if (
+                    Plaque::query()
+                        ->where('code', $code)
+                        ->where('id', '!=', $vehicule->plaque->id)
+                        ->exists()
+                ) {
+                    $code = $code.'-'.$vehicule->id;
+                }
+
+                $vehicule->plaque->update([
+                    'code' => $code,
+                ]);
+            }
+        });
+
+        return to_route('vehicules.show', $vehicule->id)
+            ->with('success', 'Véhicule mis à jour avec succès.');
     }
 }

@@ -13,6 +13,9 @@
 <body class="bg-gray-50 text-gray-800">
 
     <div class="min-h-screen">
+        @php
+            $isGlobalDashboard = \App\Support\CurrentPostTravail::isGlobal();
+        @endphp
 
         <!-- Sidebar -->
         <aside
@@ -84,40 +87,41 @@
                         </a>
                     </li>
 
+                    @if($isGlobalDashboard)
+                        <li>
+                            <a href="{{ route('post-travails.index') }}"
+                                class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l8-4v18m6 0V11l-6-4" />
+                                </svg>
+                                Choisir un poste
+                            </a>
+                        </li>
+                    @else
                     <li>
-                        <a href="#demandes"
+                        <a href="{{ route('postes.select') }}"
                             class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
-
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5l5 5v11a2 2 0 01-2 2z" />
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                             </svg>
-
-                            Demandes de cartes
-                            <span class="ml-auto rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-700">
-                                18
-                            </span>
-
+                            Changer de poste
                         </a>
                     </li>
 
+                    @can('vehicule.view')
                     <li>
-                        <a href="{{route('vehicules.index')}}"
+                        <a href="{{ route('vehicules.index') }}"
                             class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
-
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2"
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M5 11l1.5-4.5A2 2 0 018.4 5h7.2a2 2 0 011.9 1.5L19 11m-14 0h14m-14 0l-1 2v5h16v-5l-1-2" />
                             </svg>
-
                             Véhicules
                         </a>
                     </li>
+                    @endcan
 
+                    @can('produit.view')
                     <li>
                         <a href="{{ route('produits.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
                             <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -126,6 +130,9 @@
                             Produits
                         </a>
                     </li>
+                    @endcan
+
+                    @can('post_produit.view')
                     <li>
                         <a href="{{ route('post-produits.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
                             <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -134,6 +141,20 @@
                             Produits des postes
                         </a>
                     </li>
+                    @endcan
+
+                    @can('approvisionnement.view')
+                    <li>
+                        <a href="{{ route('approvisionnements.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 7l1 13h12l1-13M9 7V4h6v3m-6 5h6" />
+                            </svg>
+                            Approvisionnements
+                        </a>
+                    </li>
+                    @endcan
+
+                    @can('post_travail.view')
                     <li>
                         <a href="{{ route('post-travails.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
                             <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -142,32 +163,55 @@
                             Postes de travail
                         </a>
                     </li>
+                    @endcan
+
+                    @can('proprietaire.view')
+                    <li>
+                        <a href="{{ route('proprietaires.index') }}"
+                            class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H2v-2a4 4 0 017.75-1.33M15 7a4 4 0 11-8 0 4 4 0 018 0zm6 4a3 3 0 10-6 0 3 3 0 006 0z" />
+                            </svg>
+                            Propriétaires
+                        </a>
+                    </li>
+                    @endcan
+
+                    @role('admin')
                     <li>
                         <a href="{{ route('users.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
                             <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2m12-13a4 4 0 11-8 0 4 4 0 018 0zm5 13v-2a4 4 0 00-3-3.87M17 3.13a4 4 0 010 7.75" />
                             </svg>
-                            Utilisateurs
+                            Collaborateurs
                         </a>
                     </li>
-
+                    @else
                     <li>
-                        <a href="{{ route('proprietaires.index') }}"
-                            class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
-
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H2v-2a4 4 0 017.75-1.33M15 7a4 4 0 11-8 0 4 4 0 018 0zm6 4a3 3 0 10-6 0 3 3 0 006 0z" />
+                        <a href="{{ route('users.profile') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2m12-13a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
-
-                            Propriétaires
+                            Mon profil
                         </a>
                     </li>
+                    @endrole
+
+                    @can('role.manage')
+                    <li>
+                        <a href="{{ route('roles.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
+                            Rôles & permissions
+                        </a>
+                    </li>
+                    @endcan
 
                 </ul>
 
+                @role('admin')
                 <p class="mb-3 mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
                     Administration
                 </p>
@@ -219,6 +263,7 @@
                         </a>
                     </li>
 
+                    @endrole
                     <li>
                         <form method="POST" action="{{ route('auth.logout') }}">
                             @csrf
@@ -240,6 +285,7 @@
 
 
                 </ul>
+                    @endif
 
                 <!-- Carte d'aide -->
                 <div class="mt-8 rounded-xl bg-blue-50 p-4">
@@ -325,23 +371,40 @@
                     </button>
 
                     <!-- Profil -->
+                    @php
+                        $authUser = auth()->user();
+                        $currentPost = \App\Support\CurrentPostTravail::get();
+                        $roleLabel = $authUser?->getRoleNames()->first() ?? 'utilisateur';
+                        $initials = collect(explode(' ', (string) $authUser?->name))
+                            ->filter()
+                            ->take(2)
+                            ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))
+                            ->implode('');
+                    @endphp
                     <div class="flex items-center gap-3 border-l border-gray-200 pl-4">
 
                         <div class="hidden text-right sm:block">
                             <p class="text-sm font-semibold text-gray-900">
-                                Administrateur
+                                {{ $authUser?->name ?? 'Utilisateur' }}
                             </p>
 
                             <p class="text-xs text-gray-500">
-                                Super administrateur
+                                @if($isGlobalDashboard)
+                                    Vue globale
+                                @elseif($currentPost)
+                                    {{ $currentPost->libele }}
+                                @else
+                                    {{ str_replace('_', ' ', $roleLabel) }}
+                                @endif
                             </p>
                         </div>
 
-                        <button type="button"
+                        <a href="{{ route('postes.select') }}"
                             class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700"
-                            aria-label="Profil administrateur">
-                            AD
-                        </button>
+                            aria-label="Changer de poste"
+                            title="Changer de poste">
+                            {{ $initials !== '' ? $initials : 'U' }}
+                        </a>
 
                     </div>
 

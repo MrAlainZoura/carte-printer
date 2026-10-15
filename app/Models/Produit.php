@@ -23,4 +23,9 @@ class Produit extends Model
     {
         return $this->hasMany(PostProduit::class);
     }
+
+    public function approvisionnements(): HasMany
+    {
+        return $this->hasMany(Approvisionnement::class);
+    }
 }

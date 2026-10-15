@@ -2,17 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CarteRose;
+use App\Models\PostTravail;
 use App\Models\User;
 use App\Services\AuthServiceWeb;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
     protected AuthServiceWeb $service;
 
-    public function __construct(AuthServiceWeb  $service)
+    public function __construct(AuthServiceWeb $service)
     {
         $this->service = $service;
     }
@@ -32,8 +36,6 @@ class UserController extends Controller
         return $this->service->logout();
     }
 
-   
-
     public function me()
     {
         return $this->service->me();
@@ -51,7 +53,7 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $query = User::query();
+        $query = User::query()->with(['roles', 'postTravails']);
         if ($search = $request->string('search')->trim()->toString()) {
             $query->where(fn ($builder) => $builder
                 ->where('name', 'like', "%{$search}%")
@@ -69,33 +71,107 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        User::create($request->validate($this->rules()));
+        $validated = $request->validate($this->rules());
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'] ?? null,
+            'tel' => $validated['tel'] ?? null,
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        $user->assignRole($validated['role']);
+        $user->postTravails()->attach($validated['post_travail_id'], ['is_default' => true]);
 
         return to_route('users.index')->with('success', 'Utilisateur créé avec succès.');
     }
 
     public function show(int $id)
     {
-        $record = User::with('postTravails')->findOrFail($id);
+        $record = User::with(['postTravails', 'roles'])->findOrFail($id);
 
         return view('users.show', compact('record'));
     }
 
+    public function profile()
+    {
+        $record = auth()->user()->load(['postTravails', 'roles']);
+        $cards = CarteRose::query()->where('user_id', $record->id);
+
+        return view('users.profile', [
+            'record' => $record,
+            'stats' => [
+                'Cartes créées' => (clone $cards)->count(),
+                'Cartes actives' => (clone $cards)->where('statut', 'active')->count(),
+                'Véhicules concernés' => (clone $cards)->distinct('vehicule_id')->count('vehicule_id'),
+            ],
+        ]);
+    }
+
     public function edit(int $id)
     {
-        return $this->form(User::findOrFail($id), 'Modifier l’utilisateur');
+        return $this->form(User::with(['postTravails', 'roles'])->findOrFail($id), 'Modifier l’utilisateur');
     }
 
     public function update(Request $request, int $id)
     {
         $record = User::findOrFail($id);
-        $validated = $request->validate($this->rules($record));
-        if (blank($validated['password'] ?? null)) {
-            unset($validated['password']);
+        $isAdmin = auth()->user()?->hasRole('admin') ?? false;
+        $validated = $request->validate($this->rules($record, $isAdmin));
+
+        $payload = [
+            'name' => $validated['name'],
+            'email' => $validated['email'] ?? null,
+            'tel' => $validated['tel'] ?? null,
+        ];
+
+        if (! blank($validated['password'] ?? null)) {
+            $payload['password'] = Hash::make($validated['password']);
         }
-        $record->update($validated);
+
+        $record->update($payload);
+
+        if ($isAdmin) {
+            $record->syncRoles([$validated['role']]);
+            $record->postTravails()->sync([
+                $validated['post_travail_id'] => ['is_default' => true],
+            ]);
+        }
 
         return to_route('users.index')->with('success', 'Utilisateur modifié avec succès.');
+    }
+
+    public function editPassword()
+    {
+        return view('auth.change-password');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $request->user()->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        return to_route('postes.select')->with('success', 'Votre mot de passe a été modifié.');
+    }
+
+    public function resetPassword(int $id)
+    {
+        abort_unless(auth()->user()?->hasRole('admin'), 403);
+
+        $temporaryPassword = Str::password(16);
+        User::findOrFail($id)->update([
+            'password' => Hash::make($temporaryPassword),
+        ]);
+
+        return to_route('users.index')
+            ->with('success', 'Mot de passe réinitialisé. Communiquez ce mot de passe temporaire à l’utilisateur.')
+            ->with('temporary_password', $temporaryPassword);
     }
 
     public function destroy(int $id)
@@ -105,7 +181,7 @@ class UserController extends Controller
         return to_route('users.index')->with('success', 'Utilisateur supprimé avec succès.');
     }
 
-    private function rules(?User $record = null): array
+    private function rules(?User $record = null, bool $manageAccess = true): array
     {
         $emailRule = Rule::unique('users', 'email');
         $telRule = Rule::unique('users', 'tel');
@@ -115,19 +191,45 @@ class UserController extends Controller
             $telRule->ignore($record->id);
         }
 
-        return [
+        $assignableRoles = Role::query()
+            ->where('name', '!=', 'admin')
+            ->pluck('name')
+            ->all();
+
+        if ($record?->hasRole('admin') || auth()->user()?->hasRole('admin')) {
+            $assignableRoles[] = 'admin';
+        }
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255', $emailRule],
             'tel' => ['nullable', 'string', 'max:255', $telRule],
-            'password' => [$record ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
         ];
+
+        if (! $record || $manageAccess) {
+            $rules['password'] = [$record ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'];
+        }
+
+        if (! $record || $manageAccess) {
+            $rules['post_travail_id'] = ['required', 'integer', 'exists:post_travails,id'];
+            $rules['role'] = ['required', 'string', Rule::in($assignableRoles)];
+        }
+
+        return $rules;
     }
 
     private function form(User $record, string $title)
     {
+        $roles = User::assignableRoleLabels();
+        if ($record->hasRole('admin') || auth()->user()?->hasRole('admin')) {
+            $roles = ['admin' => 'Administrateur'] + $roles;
+        }
+
         return view('users.form', [
             'title' => $title,
             'record' => $record,
+            'posts' => PostTravail::query()->where('actif', true)->orderBy('libele')->get(),
+            'roles' => $roles,
         ]);
     }
 }

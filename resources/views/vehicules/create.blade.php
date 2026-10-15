@@ -914,7 +914,11 @@ document.addEventListener('DOMContentLoaded', function () {
         selectExistant.disabled = nouveau;
         selectExistant.required = !nouveau;
 
-        // Désactiver les champs cachés permet d'éviter leur validation HTML.
+        // Les champs du formulaire masqué ne doivent pas bloquer la validation HTML.
+        formulaireNouveau.querySelectorAll('input, select, textarea').forEach(function (champ) {
+            champ.disabled = !nouveau;
+        });
+
         if (nouveau) {
             actualiserType();
         }
@@ -925,7 +929,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialisation avec les anciennes valeurs Laravel.
     actualiserModeProprietaire();
-    actualiserType();
 
 });
 </script>

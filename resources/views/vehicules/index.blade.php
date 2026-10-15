@@ -19,23 +19,26 @@
             </p>
         </div>
 
+        @can('vehicule.create')
         <a href="{{ route('vehicules.create') }}"
            class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800">
-
-            <svg class="h-5 w-5" fill="none" stroke="currentColor"
-                 viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      stroke-width="2" d="M12 4v16m8-8H4"/>
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-
             Nouveau véhicule
         </a>
+        @endcan
 
     </div>
 
     @if(session('success'))
         <div class="mb-5 rounded-lg bg-green-50 p-4 text-sm text-green-800">
             {{ session('success') }}
+        </div>
+    @endif
+    @if(session('echec'))
+        <div class="mb-5 rounded-lg bg-red-50 p-4 text-sm text-red-800">
+            {{ session('echec') }}
         </div>
     @endif
 
@@ -87,24 +90,32 @@
                                 {{ $vehicule->usage }}
                             </td>
                              <td class="whitespace-nowrap px-6 py-4">
-
-                                <button
-                                    type="button"
-                                    class="rounded-lg p-2 text-gray-500 transition hover:bg-blue-50 hover:text-blue-700"
-                                    title="Voir les détails"
-                                    aria-label="Voir les détails de {{ $vehicule->immatriculation }}"
-                                    onclick="showVehicule('{{route('vehicules.show',['id'=>$vehicule->id])}}')"
-                                    >
-
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0c-1.5 4-5 6-9 6s-7.5-2-9-6c1.5-4 5-6 9-6s7.5 2 9 6z" />
-                                    </svg>
-                                        voir
-                                </button>
-
+                                <div class="flex items-center gap-1">
+                                    <a href="{{ route('vehicules.show', $vehicule->id) }}"
+                                       class="rounded-lg px-2 py-1.5 text-sm font-medium text-blue-700 transition hover:bg-blue-50"
+                                       title="Voir les détails">
+                                        Voir
+                                    </a>
+                                    @can('vehicule.update')
+                                    <a href="{{ route('vehicules.edit', $vehicule->id) }}"
+                                       class="rounded-lg px-2 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+                                       title="Modifier">
+                                        Modifier
+                                    </a>
+                                    @endcan
+                                    @can('vehicule.delete')
+                                    <form method="POST" action="{{ route('vehicules.destroy', $vehicule->id) }}"
+                                          onsubmit="return confirm('Supprimer ce véhicule ?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="rounded-lg px-2 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50"
+                                                title="Supprimer">
+                                            Supprimer
+                                        </button>
+                                    </form>
+                                    @endcan
+                                </div>
                             </td>
 
                         </tr>
@@ -112,7 +123,7 @@
                     @empty
 
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
+                            <td colspan="7" class="px-6 py-12 text-center">
 
                                 <p class="font-medium text-gray-900">
                                     Aucun véhicule enregistré
@@ -122,10 +133,12 @@
                                     Commencez par ajouter votre premier véhicule.
                                 </p>
 
+                                @can('vehicule.create')
                                 <a href="{{ route('vehicules.create') }}"
                                    class="mt-4 inline-block font-semibold text-blue-700 hover:underline">
                                     Enregistrer un véhicule
                                 </a>
+                                @endcan
 
                             </td>
                         </tr>
@@ -149,15 +162,3 @@
 </div>
 
 @endsection
-
-<script>
-    
-    function showVehicule(url) {
-       if (!url || typeof url !== 'string') {
-           console.log("URL invalide. Impossible d'ouvrir cette page.");
-           return;
-       }
-        const fenetre = window.open(url, '_self');
-        
-    }
-</script>

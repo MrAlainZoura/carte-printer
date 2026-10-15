@@ -5,9 +5,36 @@
 
 @section('content')
 <div class="mx-auto max-w-7xl">
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold tracking-tight text-gray-900">Tableau de bord</h1>
-        <p class="mt-1 text-sm text-gray-500">Vue d’ensemble basée sur les données enregistrées dans votre système.</p>
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-gray-900">
+                @if($isGlobal)
+                    Tableau de bord global
+                @elseif($currentPost)
+                    Tableau de bord — {{ $currentPost->libele }}
+                @else
+                    Tableau de bord
+                @endif
+            </h1>
+            <p class="mt-1 text-sm text-gray-500">
+                @if($isGlobal)
+                    Vue d’ensemble de tous les postes (accès administrateur).
+                @elseif($currentPost)
+                    Indicateurs filtrés sur le poste en cours.
+                @else
+                    Vue d’ensemble basée sur les données enregistrées dans votre système.
+                @endif
+            </p>
+        </div>
+        @if($isGlobal)
+            <a href="{{ route('post-travails.index') }}" class="inline-flex text-sm font-semibold text-blue-700 hover:underline">
+                Voir les postes →
+            </a>
+        @else
+            <a href="{{ route('postes.select') }}" class="inline-flex text-sm font-semibold text-blue-700 hover:underline">
+                Changer de poste →
+            </a>
+        @endif
     </div>
 
     <section aria-label="Indicateurs principaux" class="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -48,10 +75,17 @@
 
     <section aria-label="Autres indicateurs" class="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         @foreach($supportingStats as $stat)
-            <a href="{{ route($stat['route']) }}" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow">
-                <p class="text-sm text-gray-500">{{ $stat['label'] }}</p>
-                <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($stat['value'], 0, ',', ' ') }}</p>
-            </a>
+            @if(!empty($stat['route']))
+                <a href="{{ route($stat['route']) }}" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow">
+                    <p class="text-sm text-gray-500">{{ $stat['label'] }}</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($stat['value'], 0, ',', ' ') }}</p>
+                </a>
+            @else
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <p class="text-sm text-gray-500">{{ $stat['label'] }}</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($stat['value'], 0, ',', ' ') }}</p>
+                </div>
+            @endif
         @endforeach
     </section>
 
@@ -104,6 +138,30 @@
         </section>
     </div>
 
+    @if($isGlobal)
+        <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div class="mb-5">
+                <h2 class="text-lg font-bold text-gray-900">Accéder à un poste de travail</h2>
+                <p class="mt-1 text-sm text-gray-500">Ouvrez un tableau de bord pour consulter les opérations de ce poste.</p>
+            </div>
+            @if($posts->isEmpty())
+                <p class="rounded-lg bg-gray-50 p-5 text-center text-sm text-gray-500">Aucun poste de travail enregistré.</p>
+            @else
+                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach($posts as $post)
+                        <a href="{{ route('dashboard.post.open', $post->id) }}"
+                           class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/50">
+                            <span class="min-w-0">
+                                <span class="block truncate font-semibold text-gray-900">{{ $post->libele }}</span>
+                                <span class="mt-1 block text-sm text-gray-500">{{ $post->ville ?: 'Ville non renseignée' }}</span>
+                            </span>
+                            <span class="shrink-0 text-sm font-semibold text-blue-700">Ouvrir →</span>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        </section>
+    @else
     <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="flex flex-col justify-between gap-3 border-b border-gray-200 p-5 sm:flex-row sm:items-center">
             <div>
@@ -152,5 +210,6 @@
             </table>
         </div>
     </section>
+    @endif
 </div>
 @endsection
