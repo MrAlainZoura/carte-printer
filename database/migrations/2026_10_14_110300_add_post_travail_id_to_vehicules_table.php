@@ -18,6 +18,12 @@ return new class extends Migration
                 ->constrained('post_travails')
                 ->nullOnDelete()
                 ->cascadeOnUpdate();
+            $table->foreignId('user_id')
+                ->nullable()
+                ->after('propietaire_id')
+                ->constrained('users')
+                ->nullOnDelete()
+                ->cascadeOnUpdate();
         });
     }
 

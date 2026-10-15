@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('adresse_physique')->nullable();
             $table->string('telephone')->nullable();
             $table->string('impot')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

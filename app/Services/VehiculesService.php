@@ -109,6 +109,8 @@ class VehiculesService implements VehiculeServiceInterface
             'cartinspection'
         ]);
         $data['propietaire_id'] = $data['propietaire_id'] ?? $proprietaire_id;
+        $data['user_id']=Auth::user()->id;
+        $data['post_travail_id']= 1;
         
         $vehicule = Vehicule::create($data);
 

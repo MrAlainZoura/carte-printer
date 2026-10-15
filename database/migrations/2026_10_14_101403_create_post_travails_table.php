@@ -25,12 +25,13 @@ return new class extends Migration
             $table->text('autres')->nullable();
             $table->decimal('lon', 10, 7)->nullable();
             $table->decimal('lat', 10, 7)->nullable();
-            $table->string('type')->nullable(); // bureau, guichet, etc.
+            //$table->string('type')->nullable(); // bureau, guichet, etc.
             $table->boolean('use_cdf')->default(true);
-            $table->decimal('tva_rate', 5, 2)->default(0);
-            $table->boolean('show_tva')->default(false);
+            //$table->decimal('tva_rate', 5, 2)->default(0);
+            //$table->boolean('show_tva')->default(false);
             $table->boolean('actif')->default(true);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

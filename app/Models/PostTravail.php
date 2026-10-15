@@ -21,11 +21,12 @@ class PostTravail extends Model
         'autres',
         'lon',
         'lat',
-        'type',
+        //'type',
         'use_cdf',
-        'tva_rate',
-        'show_tva',
+        //'tva_rate',
+        //'show_tva',
         'actif',
+        'user_id'
     ];
 
     protected function casts(): array

@@ -30,6 +30,7 @@ return new class extends Migration
             $table->string('chassis')->nullable();
             $table->string('cartinspection')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
