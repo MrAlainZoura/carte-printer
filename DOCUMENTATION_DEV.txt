@@ -474,3 +474,20 @@ Commandes :
 ================================================================================
   Fin de la documentation développeur — CarteRose
 ================================================================================
+
+
+erreurs sodium et artisan
+**composer 
+
+7@fr-int-web1270 vcarte]$ /opt/alt/php84/usr/bin/php -i | grep extension_dir
+extension_dir => /opt/alt/php84/usr/lib64/php/modules => /opt/alt/php84/usr/lib64/php/modules
+sqlite3.extension_dir => no value => no value
+[u489902807@fr-int-web1270 vcarte]$ ls -l /opt/alt/php84/usr/lib64/php/modules/sodium.so
+-rwxr-xr-x 1 root 996 121680 Oct  6 09:09 /opt/alt/php84/usr/lib64/php/modules/sodium.so
+[u489902807@fr-int-web1270 vcarte]$ /opt/alt/php84/usr/bin/php -d extension=/opt/alt/php84/usr/lib64/php/modules/sodium.so -m | grep -i sodium
+sodium
+[u489902807@fr-int-web1270 vcarte]$ /opt/alt/php84/usr/bin/php -d extension=/opt/alt/php84/usr/lib64/php/modules/sodium.so /usr/local/bin/composer install
+
+**migration
+
+/opt/alt/php84/usr/bin/php artisan migrate:refresh --seed
