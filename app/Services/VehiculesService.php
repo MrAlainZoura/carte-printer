@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\VehiculeServiceInterface;
+use App\Models\PostProduit;
 use App\Models\Propietaire;
 use App\Models\Vehicule;
 use App\Services\ProprietaireService;
@@ -79,6 +80,8 @@ class VehiculesService implements VehiculeServiceInterface
                         'max:255',
                     ],
                 ]);
+            $tel = $request->input('nouveau_proprietaire.telephone');
+            $checkProprio = ProprietaireService::getByTel($tel);
             $dataNewProprietaire = $request->only(['nouveau_proprietaire']);
 
             //dd($dataNewProprietaire["nouveau_proprietaire"], 'chien');
@@ -86,8 +89,13 @@ class VehiculesService implements VehiculeServiceInterface
             $requestProprietaire = new Request(
                 $dataNewProprietaire['nouveau_proprietaire']
             );
-            $saveProprietaire = ProprietaireService::store($requestProprietaire);
-            $proprietaireId = $saveProprietaire['data']->id;
+
+            if($checkProprio != null){
+                $proprietaireId = $checkProprio->id;
+            }else{
+                $saveProprietaire = ProprietaireService::store($requestProprietaire);
+                $proprietaireId = $saveProprietaire['data']->id;
+            }
         }
         
 
@@ -114,10 +122,13 @@ class VehiculesService implements VehiculeServiceInterface
         
         $vehicule = Vehicule::create($data);
 
-        return [
-            'message'   => 'Véhicule créé.',
-            'data'  => $vehicule
-        ];
+        if($vehicule){
+            PostProduit::query()->decrement('quantite', 1);
+            return [
+                'message'   => 'Véhicule créé.',
+                'data'  => $vehicule
+            ];
+        }
     }
 
     public function create()
