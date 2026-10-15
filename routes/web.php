@@ -72,6 +72,12 @@ Route::middleware(AuthMiddleWare::class)->group(function () {
         ->name('password.change.update');
     Route::get('/mon-profil', [UserController::class, 'profile'])
         ->name('users.profile');
+    Route::get('/initialisation/poste', [PostTravailController::class, 'initialSetup'])
+        ->middleware('role:admin')
+        ->name('post-travails.initial-setup');
+    Route::post('/initialisation/poste', [PostTravailController::class, 'storeInitialSetup'])
+        ->middleware('role:admin')
+        ->name('post-travails.initial-setup.store');
     Route::get('/dashboard/global', [PostSelectionController::class, 'globalDashboard'])
         ->middleware(['role:admin', 'permission:dashboard.global'])
         ->name('dashboard.global');

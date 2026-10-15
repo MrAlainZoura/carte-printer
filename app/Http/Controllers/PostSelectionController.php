@@ -14,6 +14,10 @@ class PostSelectionController extends Controller
     {
         $user = Auth::user();
 
+        if ($user->hasRole('admin') && ! PostTravail::query()->exists()) {
+            return redirect()->route('post-travails.initial-setup');
+        }
+
         $posts = $user->hasRole('admin')
             ? PostTravail::query()->orderBy('libele')->get()
             : $user->postTravails()->orderBy('libele')->get();

@@ -4,10 +4,59 @@ namespace App\Http\Controllers;
 
 use App\Models\PostTravail;
 use App\Models\User;
+use App\Support\CurrentPostTravail;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class PostTravailController extends Controller
 {
+    public function initialSetup()
+    {
+        abort_unless(Auth::user()?->hasRole('admin'), 403);
+
+        if (PostTravail::query()->exists()) {
+            return redirect()->route('postes.select');
+        }
+
+        return view('post-travails.initial-setup');
+    }
+
+    public function storeInitialSetup(Request $request)
+    {
+        abort_unless(Auth::user()?->hasRole('admin'), 403);
+
+        if (PostTravail::query()->exists()) {
+            return redirect()->route('postes.select');
+        }
+
+        $validated = $request->validate([
+            'libele' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'contact1' => ['nullable', 'string', 'max:255'],
+            'ville' => ['nullable', 'string', 'max:255'],
+            'province' => ['nullable', 'string', 'max:255'],
+            'pays' => ['nullable', 'string', 'max:255'],
+            'use_cdf' => ['required', 'boolean'],
+        ]);
+
+        $postTravail = DB::transaction(function () use ($validated) {
+            $postTravail = PostTravail::create([
+                ...$validated,
+                'actif' => true,
+            ]);
+
+            Auth::user()->postTravails()->attach($postTravail->id, ['is_default' => true]);
+
+            return $postTravail;
+        });
+
+        CurrentPostTravail::set($postTravail->id);
+
+        return redirect()->route('dashboard')
+            ->with('success', 'Premier poste de travail créé avec succès.');
+    }
+
     /**
      * Display a listing of the resource.
      */
