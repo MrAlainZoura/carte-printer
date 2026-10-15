@@ -10,7 +10,8 @@ use Spatie\Permission\PermissionRegistrar;
 class RolePermissionSeeder extends Seeder
 {
     /**
-     * Rôles / autorisations (UML ROLE + AUTORISATION via Spatie).
+     * Admin : tous les droits.
+     * Autres rôles : lecture + création uniquement.
      */
     public function run(): void
     {
@@ -23,63 +24,61 @@ class RolePermissionSeeder extends Seeder
             'vehicule.delete',
             'carte_rose.view',
             'carte_rose.create',
+            'carte_rose.update',
             'carte_rose.print',
             'carte_rose.cancel',
             'plaque.view',
             'plaque.create',
+            'plaque.update',
             'plaque.assign',
             'post_travail.view',
+            'post_travail.create',
             'post_travail.manage',
             'proprietaire.view',
+            'proprietaire.create',
             'proprietaire.manage',
+            'produit.view',
+            'produit.create',
+            'produit.manage',
+            'post_produit.view',
+            'post_produit.create',
+            'post_produit.manage',
+            'approvisionnement.view',
+            'approvisionnement.create',
+            'approvisionnement.manage',
+            'approvisionnement.confirm',
+            'user.view',
+            'user.create',
             'user.manage',
             'role.manage',
+            'dashboard.global',
         ];
 
         foreach ($permissions as $permission) {
-            Permission::findOrCreate($permission);
+            Permission::findOrCreate($permission, 'web');
         }
 
-        $admin = Role::findOrCreate('admin');
+        $admin = Role::findOrCreate('admin', 'web');
         $admin->syncPermissions(Permission::all());
 
-        $chefPoste = Role::findOrCreate('chef_poste');
-        $chefPoste->syncPermissions([
-            'vehicule.view',
-            'vehicule.create',
-            'vehicule.update',
-            'carte_rose.view',
-            'carte_rose.create',
-            'carte_rose.print',
-            'carte_rose.cancel',
-            'plaque.view',
-            'plaque.create',
-            'plaque.assign',
-            'post_travail.view',
-            'proprietaire.view',
-            'proprietaire.manage',
-        ]);
+        $readAndCreate = Permission::query()
+            ->where(function ($query) {
+                $query->where('name', 'like', '%.view')
+                    ->orWhere('name', 'like', '%.create');
+            })
+            ->pluck('name')
+            ->all();
 
-        $agent = Role::findOrCreate('agent');
-        $agent->syncPermissions([
-            'vehicule.view',
-            'vehicule.create',
-            'carte_rose.view',
-            'carte_rose.create',
-            'carte_rose.print',
-            'plaque.view',
-            'plaque.assign',
-            'post_travail.view',
-            'proprietaire.view',
-        ]);
+        foreach (['chef_poste', 'agent', 'lecteur'] as $roleName) {
+            $role = Role::findOrCreate($roleName, 'web');
+            $role->syncPermissions($readAndCreate);
+        }
 
-        $lecteur = Role::findOrCreate('lecteur');
-        $lecteur->syncPermissions([
-            'vehicule.view',
-            'carte_rose.view',
-            'plaque.view',
-            'post_travail.view',
-            'proprietaire.view',
-        ]);
+        Role::findByName('chef_poste', 'web')->givePermissionTo('approvisionnement.confirm');
+
+        // Impression carte rose : tous sauf lecteur
+        foreach (['chef_poste', 'agent'] as $roleName) {
+            Role::findByName($roleName, 'web')->givePermissionTo('carte_rose.print');
+        }
     }
 }

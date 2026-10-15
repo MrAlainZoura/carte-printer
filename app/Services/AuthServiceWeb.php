@@ -2,72 +2,99 @@
 
 namespace App\Services;
 
-use App\Enums\AuthMessage;
+use App\Contracts\AuthServiceInterfaceWeb;
+use App\Models\PostTravail;
 use App\Models\User;
+use App\Support\CurrentPostTravail;
 use App\Traits\RespondWithTokenTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use App\Contracts\AuthServiceInterfaceWeb;
+use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
 
 class AuthServiceWeb implements AuthServiceInterfaceWeb
 {
     use RespondWithTokenTrait;
-    static public function register(Request $request)
+
+    private const SEEDED_ADMIN_EMAIL = 'admin@gmail.com';
+
+    public static function hasSecondaryAdmin(): bool
     {
-        //return response()->json([$request->all()]);
+        return User::role('admin')
+            ->where('email', '!=', self::SEEDED_ADMIN_EMAIL)
+            ->exists();
+    }
+
+    public static function register(Request $request)
+    {
+        if (self::hasSecondaryAdmin()) {
+            return redirect()->route('login');
+        }
+
+        $assignableRoles = Role::query()
+            ->where('name', '!=', 'admin')
+            ->pluck('name')
+            ->all();
+
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',            // Téléphone obligatoire, format international
-            'tel'      => [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6|confirmed',
+            'tel' => [
                 'required',
                 'string',
                 'unique:users',
-                'regex:/^\+[1-9][0-9]{7,14}$/'
+                'regex:/^\+[1-9][0-9]{7,14}$/',
             ],
+            'post_travail_id' => ['required', 'integer', 'exists:post_travails,id'],
+            'role' => ['required', 'string', Rule::in($assignableRoles)],
         ]);
-        if($request->password !== $request->password_confirmation){
-            return back()->with('echec',"Les mots de passe ne correspondent pas.");
-        }
+
+        $post = PostTravail::query()
+            ->where('id', $request->post_travail_id)
+            ->where('actif', true)
+            ->firstOrFail();
+
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => strtolower($request->email), // normalisation email
-            'tel'      => $request->tel,               // correction ici
+            'name' => $request->name,
+            'email' => strtolower($request->email),
+            'tel' => $request->tel,
             'password' => Hash::make($request->password),
         ]);
 
-        // Envoi automatique de l’email de vérification
-        //$statusMessageSend = $user->sendEmailVerificationNotification();
+        $user->assignRole($request->role);
+        $user->postTravails()->attach($post->id, ['is_default' => true]);
 
         return back()->with('success', 'Utilisateur créé. Connectez-vous avec votre email ou votre numéro de téléphone.');
     }
 
-      static public function login(Request $request){
-        
+    public static function login(Request $request)
+    {
         if (Auth::check()) {
-            return redirect()->intended('dashboard');
+            return redirect()->route('postes.select');
         }
-        $daliation = Validator::make($request->all(),[
-            'identifiant'=>'required',
-            'password'=>'required|min:4'
+
+        $validation = Validator::make($request->all(), [
+            'identifiant' => 'required',
+            'password' => 'required|min:4',
+            'remember' => ['sometimes', 'boolean'],
         ]);
-        if($daliation->fails()){
-            return back()->with('echec',$daliation->errors());
+
+        if ($validation->fails()) {
+            return back()->with('echec', $validation->errors());
         }
 
         $identifier = trim((string) $request->identifiant);
         $password = $request->password;
+        $remember = $request->boolean('remember');
         $kind = self::loginKind($identifier);
 
         if ($kind === 'email') {
             $userByEmail = User::whereRaw('LOWER(email) = ?', [mb_strtolower($identifier)])->first();
             if ($userByEmail && Hash::check($password, $userByEmail->password)) {
-                Auth::login($userByEmail);
-                $request->session()->regenerate();
-                return redirect()->intended('dashboard');
+                return self::completeLogin($request, $userByEmail, $remember);
             }
         }
 
@@ -82,31 +109,35 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
                 });
 
             if ($matchingUsers->count() > 1) {
-                return back()->with('echec', "Ce numéro est lié à plusieurs comptes. Connectez-vous avec votre email.");
+                return back()->with('echec', 'Ce numéro est lié à plusieurs comptes. Connectez-vous avec votre email.');
             }
             if ($matchingUsers->count() === 1) {
-                Auth::login($matchingUsers->first());
-                $request->session()->regenerate();
-                return redirect()->intended('dashboard');
+                return self::completeLogin($request, $matchingUsers->first(), $remember);
             }
         }
 
-        // Nom d'utilisateur : insensible à la casse
         $users = User::whereRaw('LOWER(name) = ?', [mb_strtolower($identifier)])->get();
         $matchingUsers = $users->filter(function ($user) use ($password) {
             return Hash::check($password, $user->password);
         });
 
         if ($matchingUsers->count() > 1) {
-            return back()->with('echec',"Ce nom d’utilisateur et mot de passe sont utilisés par plusieurs comptes. Veuillez vous connecter avec votre adresse email.");
+            return back()->with('echec', "Ce nom d’utilisateur et mot de passe sont utilisés par plusieurs comptes. Veuillez vous connecter avec votre adresse email.");
         }
         if ($matchingUsers->count() === 1) {
-            Auth::login($matchingUsers->first());
-            $request->session()->regenerate();
-            return redirect()->intended('dashboard');
+            return self::completeLogin($request, $matchingUsers->first(), $remember);
         }
 
-       return back()->with('echec',"email / téléphone / nom d'utilisateur ou mot de passe incorrect");
+        return back()->with('echec', "email / téléphone / nom d'utilisateur ou mot de passe incorrect");
+    }
+
+    protected static function completeLogin(Request $request, User $user, bool $remember = false)
+    {
+        Auth::login($user, $remember);
+        $request->session()->regenerate();
+        CurrentPostTravail::clear();
+
+        return redirect()->route('postes.select');
     }
 
     protected static function loginKind(string $identifier): string
@@ -123,16 +154,21 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
         return 'name';
     }
 
-    static public function logout(){
+    public static function logout()
+    {
+        CurrentPostTravail::clear();
         Auth::logout();
-        return redirect(url("/"));
+
+        return redirect(url('/'));
     }
 
-    static public function me(){
+    public static function me()
+    {
         return Auth::user();
     }
 
-    static function all(){
+    public static function all()
+    {
         return User::latest()->get();
     }
 }

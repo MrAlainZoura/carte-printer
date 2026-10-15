@@ -3,9 +3,6 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="{{ asset('build/assets/app-DCw2KBNK.css') }}">
-        <script src="{{ asset('build/assets/app-BvRk9kiK.js') }}" defer></script>
-    
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         <title>Connexion | VCarte</title>
@@ -179,14 +176,20 @@
                     </form>
 
                     <!-- Lien inscription -->
-                    <p class="mt-6 text-center text-sm text-gray-500">
-                        Vous n'avez pas encore de compte ?
+                    @if ($registrationClosed)
+                        <p class="mt-6 text-center text-sm text-gray-500">
+                            La création de compte est désactivée. Veuillez contacter votre administrateur pour obtenir un compte.
+                        </p>
+                    @else
+                        <p class="mt-6 text-center text-sm text-gray-500">
+                            Vous n'avez pas encore de compte ?
 
-                        <a href="{{ route('register') }}"
-                           class="font-semibold text-blue-700 hover:underline">
-                            Créer un compte
-                        </a>
-                    </p>
+                            <a href="{{ route('register') }}"
+                               class="font-semibold text-blue-700 hover:underline">
+                                Créer un compte
+                            </a>
+                        </p>
+                    @endif
 
                 </div>
 
@@ -200,4 +203,3 @@
 
     </body>
     </html>
-

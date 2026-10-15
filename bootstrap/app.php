@@ -17,10 +17,23 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'post.selected' => \App\Http\Middleware\EnsurePostTravailSelected::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+
+        $exceptions->render(function (\Spatie\Permission\Exceptions\UnauthorizedException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Vous n’avez pas la permission d’effectuer cette action.',
+                ], 403);
+            }
+
+            return redirect()
+                ->back(fallback: route('dashboard'))
+                ->with('error', 'Vous n’avez pas la permission d’effectuer cette action.');
+        });
     })->create();

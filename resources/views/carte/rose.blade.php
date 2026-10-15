@@ -91,7 +91,7 @@
 
         .verso-signature {
             position: absolute;
-            top: 40mm;
+            top: 41.3mm;
             left: 62mm;
             width: 18mm;
             height: 9mm;

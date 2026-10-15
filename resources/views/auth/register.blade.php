@@ -4,9 +4,6 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <link rel="stylesheet" href="{{ asset('build/assets/app-DCw2KBNK.css') }}">
-        <script src="{{ asset('build/assets/app-BvRk9kiK.js') }}" defer></script>
-
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         <title>Inscription | VCarte</title>
@@ -145,6 +142,62 @@
                             >
 
                             @error('tel')
+                                <p class="mt-2 text-sm text-red-600">
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+
+                        <!-- Poste de travail -->
+                        <div>
+                            <label for="post_travail_id"
+                                   class="mb-2 block text-sm font-medium text-gray-900">
+                                Poste de travail
+                            </label>
+
+                            <select
+                                name="post_travail_id"
+                                id="post_travail_id"
+                                required
+                                class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                            >
+                                <option value="">Sélectionnez un poste</option>
+                                @foreach($posts as $post)
+                                    <option value="{{ $post->id }}" @selected(old('post_travail_id') == $post->id)>
+                                        {{ $post->libele }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            @error('post_travail_id')
+                                <p class="mt-2 text-sm text-red-600">
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+
+                        <!-- Rôle (hors admin) -->
+                        <div>
+                            <label for="role"
+                                   class="mb-2 block text-sm font-medium text-gray-900">
+                                Rôle
+                            </label>
+
+                            <select
+                                name="role"
+                                id="role"
+                                required
+                                class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                            >
+                                <option value="">Sélectionnez un rôle</option>
+                                @foreach($roles as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('role') === $value)>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            @error('role')
                                 <p class="mt-2 text-sm text-red-600">
                                     {{ $message }}
                                 </p>

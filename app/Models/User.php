@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -40,6 +41,42 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsToMany(PostTravail::class)
             ->withPivot('is_default')
             ->withTimestamps();
+    }
+
+    public function defaultPostTravail(): ?PostTravail
+    {
+        return $this->postTravails()
+            ->wherePivot('is_default', true)
+            ->first()
+            ?? $this->postTravails()->first();
+    }
+
+    public function approvisionnements(): HasMany
+    {
+        return $this->hasMany(Approvisionnement::class);
+    }
+
+    public function receptionsApprovisionnement(): HasMany
+    {
+        return $this->hasMany(Approvisionnement::class, 'receptionUser');
+    }
+
+    public static function assignableRoleLabels(): array
+    {
+        $defaults = [
+            'chef_poste' => 'Chef de poste',
+            'agent' => 'Agent',
+            'lecteur' => 'Lecteur',
+        ];
+
+        return \Spatie\Permission\Models\Role::query()
+            ->where('name', '!=', 'admin')
+            ->orderBy('name')
+            ->pluck('name')
+            ->mapWithKeys(fn (string $name) => [
+                $name => $defaults[$name] ?? ucwords(str_replace('_', ' ', $name)),
+            ])
+            ->all();
     }
 
     // Méthodes obligatoires pour JWT

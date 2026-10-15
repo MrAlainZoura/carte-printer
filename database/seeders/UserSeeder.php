@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\PostTravail;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
@@ -22,5 +23,10 @@ class UserSeeder extends Seeder
         );
 
         $admin->assignRole('admin');
+
+        $central = PostTravail::query()->firstOrCreate(['libele' => 'Central']);
+        if (! $admin->postTravails()->where('post_travails.id', $central->id)->exists()) {
+            $admin->postTravails()->attach($central->id, ['is_default' => true]);
+        }
     }
 }

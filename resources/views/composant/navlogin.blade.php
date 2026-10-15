@@ -1,6 +1,7 @@
   @php
     $registerRoute = Route::current()->getName() == "register";
     $loginRoute = Route::current()->getName() == "login";
+    $registrationClosed = $registrationClosed ?? false;
   @endphp
   <nav class="border-b border-gray-200 bg-white">
         <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -25,10 +26,12 @@
                     Connexion
                 </a>
 
-                <a href="{{ route('register') }}"
-                   class="{{$loginRoute ?: 'hidden'}} rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 focus:ring-4 focus:ring-blue-300">
-                    S'inscrire
-                </a>
+                @if (! $registrationClosed)
+                    <a href="{{ route('register') }}"
+                       class="{{$loginRoute ?: 'hidden'}} rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 focus:ring-4 focus:ring-blue-300">
+                        S'inscrire
+                    </a>
+                @endif
             </div>
 
         </div>
