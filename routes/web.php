@@ -86,13 +86,13 @@ Route::middleware(AuthMiddleWare::class)->group(function () {
         });
 
         Route::get('vehicules/{vehicule}/plaque/{plaque}/edit', [PlaqueController::class, 'edit'])
-            ->middleware('permission:plaque.update')->name('plaques.edit');
+            ->middleware('permission:vehicule.update|plaque.update')->name('plaques.edit');
         Route::put('vehicules/{vehicule}/plaque/{plaque}', [PlaqueController::class, 'update'])
-            ->middleware('permission:plaque.update')->name('plaques.update');
+            ->middleware('permission:vehicule.update|plaque.update')->name('plaques.update');
         Route::get('vehicules/{vehicule}/carte-rose/{carteRose}/edit', [CarteRoseController::class, 'edit'])
-            ->middleware('permission:carte_rose.update')->name('carte-roses.edit');
+            ->middleware('permission:vehicule.update|carte_rose.update')->name('carte-roses.edit');
         Route::put('vehicules/{vehicule}/carte-rose/{carteRose}', [CarteRoseController::class, 'update'])
-            ->middleware('permission:carte_rose.update')->name('carte-roses.update');
+            ->middleware('permission:vehicule.update|carte_rose.update')->name('carte-roses.update');
 
         // Postes de travail
         Route::get('post-travails', [PostTravailController::class, 'index'])->middleware('permission:post_travail.view')->name('post-travails.index');

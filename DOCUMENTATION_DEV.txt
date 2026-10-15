@@ -1,0 +1,452 @@
+================================================================================
+  CARTEROSE — DOCUMENTATION DÉVELOPPEUR
+================================================================================
+Projet   : CarteRose
+Stack    : Laravel 13 / PHP 8.3 / Blade / Vite / Spatie Permission / JWT / DomPDF / QRCode
+Objectif : Gestion des cartes roses, plaques d'immatriculation, véhicules,
+           propriétaires et stocks de produits par poste de travail.
+
+Dernière mise à jour : 2026-10-15
+
+
+--------------------------------------------------------------------------------
+1. PRÉSENTATION
+--------------------------------------------------------------------------------
+
+CarteRose est une application web (session Blade) pour les services
+d'immatriculation / cartes roses. Elle permet de :
+
+  - authentifier les agents et administrateurs ;
+  - sélectionner un poste de travail (contexte de session) ;
+  - enregistrer des véhicules avec propriétaire (existant ou nouveau) ;
+  - générer automatiquement une plaque et une carte rose à la création ;
+  - imprimer la carte rose (PDF) avec QR code ;
+  - gérer les stocks de produits par poste (approvisionnements) ;
+  - administrer utilisateurs, rôles et permissions.
+
+Une API JWT minimale existe aussi (login / logout / refresh / me).
+
+
+--------------------------------------------------------------------------------
+2. PRÉREQUIS
+--------------------------------------------------------------------------------
+
+  - PHP >= 8.3 avec extensions Laravel habituelles (pdo, mbstring, openssl, etc.)
+  - Composer 2.x
+  - Node.js + npm (assets Vite)
+  - SQLite (défaut .env.example) ou MySQL/PostgreSQL
+
+
+--------------------------------------------------------------------------------
+3. INSTALLATION LOCALE
+--------------------------------------------------------------------------------
+
+  1) Cloner / se placer dans le projet
+       cd /var/www/CarteRose
+
+  2) Dépendances PHP + frontend
+       composer install
+       cp .env.example .env
+       php artisan key:generate
+       npm install
+
+  3) Base de données
+       # SQLite (rapide) :
+       touch database/database.sqlite
+       # ou configurer DB_* dans .env pour MySQL
+
+       php artisan migrate
+       php artisan db:seed
+
+  4) Lancer en développement
+       composer run dev
+       # équivalent : serveur + queue + logs (pail) + vite en parallèle
+
+  Ou séparément :
+       php artisan serve
+       npm run dev
+
+  Script tout-en-un alternatif :
+       composer run setup
+
+
+--------------------------------------------------------------------------------
+4. ARCHITECTURE
+--------------------------------------------------------------------------------
+
+Organisation type Laravel avec couche Services + Contracts.
+
+  app/
+    Contracts/          Interfaces des services (DI)
+    Enums/              Messages d'auth, etc.
+    Http/
+      Controllers/      Contrôleurs fins (délèguent aux services)
+      Middleware/       Auth session, JWT, poste sélectionné
+    Models/             Eloquent
+    Providers/          AppServiceProvider, RouteServiceProvider
+    Services/           Logique métier
+    Support/            Helpers (ex. CurrentPostTravail)
+    Traits/
+
+  bootstrap/app.php     Routing + alias middleware + exceptions Spatie
+  routes/web.php        Application principale (session)
+  routes/api.php        Auth JWT minimale
+  resources/views/      Blade (layouts, CRUD, auth, carte)
+  database/migrations/  Schéma
+  database/seeders/     Rôles, postes, users, produits, stocks
+
+
+Flux typique requête web
+------------------------
+  Request
+    -> AuthMiddleWare (session connectée)
+    -> post.selected (poste ou dashboard global admin)
+    -> permission / role (Spatie)
+    -> Controller
+    -> Service
+    -> Model / DB
+    -> View ou redirect
+
+
+--------------------------------------------------------------------------------
+5. MODÈLES & RELATIONS PRINCIPALES
+--------------------------------------------------------------------------------
+
+  User
+    - rôles Spatie (admin, chef_poste, agent, lecteur)
+    - many-to-many PostTravail (pivot is_default)
+
+  PostTravail
+    - hasMany : Vehicule, CarteRose, Plaque, PostProduit, Approvisionnement
+    - belongsToMany : User
+
+  Propietaire  (orthographe historique du projet : "propietaire")
+    - hasMany Vehicule
+    - types : Entreprise | Personne Physique | Organisation | Autres
+
+  Vehicule  (SoftDeletes)
+    - belongsTo Propietaire, PostTravail
+    - hasOne Plaque
+    - hasMany CarteRose
+
+  Plaque
+    - belongsTo Vehicule, PostTravail
+    - code unique (immatriculation), statut (ex. attribuee)
+
+  CarteRose
+    - belongsTo Vehicule, PostTravail, User
+    - numero unique, qr_token (UUID), statut (ex. active)
+    - format auto-généré : DGRK/XXXX/{vehicule_id}/ddmmyyyy
+
+  Produit
+    - catalogue global (plaque, carte rose, etc.)
+
+  PostProduit
+    - stock d'un Produit pour un PostTravail (quantite)
+
+  Approvisionnement
+    - entrée de stock vers un poste (création -> confirmation)
+
+
+Contexte "poste courant"
+------------------------
+  App\Support\CurrentPostTravail
+    - SESSION_POST_ID  : id du poste actif
+    - SESSION_GLOBAL   : mode dashboard global (admin)
+    - used par VehiculesService::all() pour filtrer les listes
+
+
+--------------------------------------------------------------------------------
+6. SERVICES MÉTIER
+--------------------------------------------------------------------------------
+
+  VehiculesService (VehiculeServiceInterface)
+    store()
+      - valide véhicule + option création propriétaire
+      - exige un post_travail (session ou défaut user)
+      - transaction DB :
+          * crée Vehicule
+          * crée Plaque (code = immatriculation, dédoublonnage -{id})
+          * crée CarteRose (numero fourni ou généré, qr_token UUID)
+          * décrémente jusqu'à 2 PostProduit du poste (stock > 0)
+    update()  — met à jour véhicule + code plaque
+    show/all/delete/edit/create
+
+  ProprietaireService
+    - CRUD propriétaires, recherche par téléphone (getByTel)
+
+  CarteService
+    - logique cartes roses / impression
+
+  AuthService / AuthServiceWeb
+    - auth API JWT vs auth web session
+
+
+--------------------------------------------------------------------------------
+7. AUTHENTIFICATION & SÉCURITÉ
+--------------------------------------------------------------------------------
+
+Web (session)
+-------------
+  Middleware : App\Http\Middleware\AuthMiddleWare
+  Routes login/register publiques ; reste protégé.
+  Après login : choix de poste (/choix-poste) sauf admin global.
+
+API (JWT)
+---------
+  Package : tymon/jwt-auth
+  Middleware : JwtMiddleware
+  Routes (prefix /api) :
+    POST /api/login
+    POST /api/logout
+    POST /api/refresh
+    GET  /api/me
+
+Permissions (Spatie, guard web)
+-------------------------------
+  Alias middleware (bootstrap/app.php) :
+    role, permission, role_or_permission, post.selected
+
+  Rôles seedés :
+    admin       — toutes les permissions
+    chef_poste  — view + create (+ approvisionnement.confirm)
+    agent       — view + create
+    lecteur     — view + create
+
+  Permissions principales :
+    vehicule.* , carte_rose.* , plaque.* , post_travail.* ,
+    proprietaire.* , produit.* , post_produit.* ,
+    approvisionnement.* , user.* , role.manage , dashboard.global
+
+  Seeder : database/seeders/RolePermissionSeeder.php
+
+
+--------------------------------------------------------------------------------
+8. ROUTES WEB UTILES
+--------------------------------------------------------------------------------
+
+  Auth
+    GET  /login , /register
+    POST /auth/login , /auth/register , /auth/logout
+
+  Contexte
+    GET|POST /choix-poste
+    GET      /dashboard
+    GET      /dashboard/global          (admin + dashboard.global)
+    GET      /dashboard/poste/{id}      (admin)
+
+  Métier (sous middleware auth + post.selected)
+    /vehicules           CRUD + show
+    /vehicules/{v}/plaque/{p}/edit|PUT
+    /vehicules/{v}/carte-rose/{c}/edit|PUT
+    /carte-roses         index, create, store, show
+    /carte/{id}          impression PDF
+    /plaques
+    /proprietaires
+    /post-travails
+    /produits
+    /post-produits
+    /approvisionnements  (+ PATCH confirm)
+    /users               (admin)
+    /roles               (role.manage)
+
+
+--------------------------------------------------------------------------------
+9. FLUX MÉTIER CLÉS
+--------------------------------------------------------------------------------
+
+9.1 Création d'un véhicule
+    1. Agent connecté avec poste sélectionné
+    2. Formulaire véhicules/create
+       - propriétaire existant OU nouveau (creer_proprietaire=1)
+       - champs véhicule obligatoires : marque, type, couleur,
+         immatriculation, usage
+       - carte_numero optionnel (unique si fourni)
+    3. VehiculesService::store
+       - crée propriétaire si besoin (ou réutilise par téléphone)
+       - crée véhicule + plaque + carte rose
+       - consomme stock PostProduit (2 unités max, orderBy id)
+    4. Redirect / message succès
+
+9.2 Impression carte rose
+    Route nommée carte.imprimer
+    Permission : carte_rose.print
+    DomPDF + QR (simplesoftwareio/simple-qrcode) via qr_token
+
+9.3 Approvisionnement
+    Création d'une demande / entrée
+    Confirmation (chef_poste / permission confirm) met à jour le stock
+    PostProduit
+
+
+--------------------------------------------------------------------------------
+10. FRONTEND
+--------------------------------------------------------------------------------
+
+  - Blade + layouts dans resources/views/layouts
+  - Assets Vite : vite.config.js , resources/js , resources/css
+  - Build prod : npm run build
+  - Assets publics : public/bg , public/sign , public/build
+
+
+--------------------------------------------------------------------------------
+11. BASE DE DONNÉES — MIGRATIONS CLÉS
+--------------------------------------------------------------------------------
+
+  users / cache / jobs
+  propietaires
+  vehicules (+ soft deletes, post_travail_id)
+  post_travails
+  carte_roses
+  plaques
+  post_travail_user (pivot)
+  permission tables (Spatie)
+  produits
+  post_produits
+  approvisionnements
+
+Commandes :
+  php artisan migrate
+  php artisan migrate:fresh --seed   # ATTENTION : efface les données
+  php artisan db:seed
+
+
+--------------------------------------------------------------------------------
+12. TESTS & QUALITÉ
+--------------------------------------------------------------------------------
+
+  php artisan test          # ou composer test
+  ./vendor/bin/pint         # style PHP (Laravel Pint)
+  phpunit.xml               # config PHPUnit 12
+
+
+--------------------------------------------------------------------------------
+13. CONVENTIONS DE CODE
+--------------------------------------------------------------------------------
+
+  - Controllers minces ; logique dans Services
+  - Interfaces dans app/Contracts pour les services principaux
+  - Réponses services souvent : ['message' => ..., 'data' => ...]
+  - Orthographe métier conservée : propietaire (table + FK)
+  - Valeurs vides souvent remplacées par "Non renseigne"
+  - Transactions DB pour opérations multi-tables (création véhicule)
+  - SoftDeletes sur Vehicule
+  - Middleware permission sur chaque action sensible
+  - Ne pas committer .env
+
+
+--------------------------------------------------------------------------------
+14. PLUGINS & TECHNOLOGIES INSTALLÉS
+--------------------------------------------------------------------------------
+
+14.1 Stack / runtime
+--------------------
+  PHP                    ^8.3
+  Laravel Framework      ^13.8
+  Blade                  vues serveur
+  Vite                   ^8.0   (bundler frontend)
+  Tailwind CSS           ^4.3   (via @tailwindcss/vite)
+  Flowbite               ^4.0   (composants UI)
+  SQLite / MySQL / PG    BDD (SQLite par défaut .env.example)
+  Node.js + npm          assets JS/CSS
+
+
+14.2 Packages Composer — production (composer.json require)
+----------------------------------------------------------
+  laravel/framework              ^13.8   Framework principal
+  laravel/sanctum                ^4.0    Auth API tokens (Sanctum)
+  laravel/tinker                 ^3.0    REPL artisan tinker
+  spatie/laravel-permission      ^8.3    Rôles & permissions
+  tymon/jwt-auth                 ^2.3    Authentification JWT (API)
+  barryvdh/laravel-dompdf        ^3.1    Génération PDF (cartes roses)
+  simplesoftwareio/simple-qrcode ^4.2    QR codes (BaconQrCode)
+
+
+14.3 Packages Composer — développement (require-dev)
+----------------------------------------------------
+  phpunit/phpunit                ^12.5   Tests unitaires / feature
+  laravel/pint                   ^1.27   Style / formatage PHP
+  laravel/pail                   ^1.2    Logs temps réel (cli)
+  laravel/pao                    ^1.0    Outil Laravel dev
+  nunomaduro/collision           ^8.6    Affichage d'erreurs CLI
+  fakerphp/faker                 ^1.23   Données fictives (seed/factories)
+  mockery/mockery                ^1.6    Mocks pour tests
+
+
+14.4 Packages npm (package.json)
+--------------------------------
+  Production (dependencies) :
+    flowbite                     ^4.0.2  Composants UI (modals, dropdowns…)
+
+  Développement (devDependencies) :
+    vite                         ^8.0.0  Bundler
+    laravel-vite-plugin          ^3.1    Intégration Vite ↔ Laravel
+    tailwindcss                  ^4.3.3  Utility-first CSS
+    @tailwindcss/vite            ^4.3.3  Plugin Vite Tailwind v4
+    concurrently                 ^9.0.1  Lancer serve + vite + queue ensemble
+
+
+14.5 Rôle de chaque techno métier
+---------------------------------
+  Spatie Permission  -> middleware role / permission sur les routes web
+  JWT (tymon)        -> routes /api/login|logout|refresh|me
+  DomPDF             -> impression carte rose (PDF)
+  Simple QrCode      -> QR sur la carte (qr_token UUID)
+  Sanctum            -> tokens API (présent dans le projet)
+  Flowbite + Tailwind-> UI Blade (formulaires, navigation, composants)
+  Vite               -> compilation CSS/JS en dev et prod
+
+
+14.6 Installation / mise à jour
+-------------------------------
+  composer install | composer update
+  npm install      | npm update
+  php artisan vendor:publish   # si besoin (config Spatie, JWT, etc.)
+
+
+--------------------------------------------------------------------------------
+15. FICHIERS UTILES POUR LES DEV
+--------------------------------------------------------------------------------
+
+  routes/web.php
+  routes/api.php
+  bootstrap/app.php
+  app/Services/VehiculesService.php
+  app/Support/CurrentPostTravail.php
+  database/seeders/RolePermissionSeeder.php
+  database/seeders/DatabaseSeeder.php
+  resources/views/vehicules/
+  resources/views/carte/
+
+
+--------------------------------------------------------------------------------
+16. POINTS D'ATTENTION / DETTE TECHNIQUE
+--------------------------------------------------------------------------------
+
+  - Orthographe "propietaire" volontaire (historique) : ne pas "corriger"
+    sans migration de rename.
+  - Routes /test-email et /test-php présentes (à retirer en prod).
+  - API JWT encore minimale (auth seulement) ; le métier est surtout web.
+  - Consommation stock à la création véhicule : décrémente jusqu'à 2
+    PostProduit sans vérifier le type de produit — à valider métier.
+  - planTravail.txt / uml*.txt à la racine concernent un autre projet
+    (GPaie) : ne pas les confondre avec le domaine CarteRose.
+
+
+--------------------------------------------------------------------------------
+17. CHECKLIST NOUVEAU DÉVELOPPEUR
+--------------------------------------------------------------------------------
+
+  [ ] composer install && npm install
+  [ ] .env configuré + key:generate
+  [ ] migrate + seed
+  [ ] composer run dev
+  [ ] Se connecter avec un user seedé (voir UserSeeder)
+  [ ] Choisir un poste de travail
+  [ ] Créer un véhicule et vérifier plaque + carte rose + stock
+  [ ] Tester une permission refusée (rôle agent vs admin)
+  [ ] Imprimer une carte rose (PDF/QR)
+
+================================================================================
+  Fin de la documentation développeur — CarteRose
+================================================================================
