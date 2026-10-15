@@ -1,8 +1,12 @@
 <?php
 
 use App\Http\Controllers\CarteRoseController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PlaqueController;
+use App\Http\Controllers\PostProduitController;
 use App\Http\Controllers\PostTravailController;
+use App\Http\Controllers\ProduitController;
+use App\Http\Controllers\PropietaireController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehiculeController;
 use App\Http\Middleware\AuthMiddleWare;
@@ -56,11 +60,13 @@ Route::middleware(AuthMiddleWare::class)->group(function () {
             Route::post('/', 'store')->name('store');
         });
 
-    Route::get('/dashboard', function () {
-        return view('dashboard.index');
-    })->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::resource('post-travails', PostTravailController::class);
+    Route::resource('post-produits', PostProduitController::class);
+    Route::resource('produits', ProduitController::class);
+    Route::resource('proprietaires', PropietaireController::class);
+    Route::resource('users', UserController::class);
     Route::resource('carte-roses', CarteRoseController::class);
     Route::resource('plaques', PlaqueController::class);
 

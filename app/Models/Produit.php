@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Produit extends Model
@@ -18,5 +19,8 @@ class Produit extends Model
         'etat'
     ];
 
-
+    public function postProduits(): HasMany
+    {
+        return $this->hasMany(PostProduit::class);
+    }
 }

@@ -56,6 +56,11 @@ class PostTravail extends Model
         return $this->hasMany(Vehicule::class);
     }
 
+    public function postProduits(): HasMany
+    {
+        return $this->hasMany(PostProduit::class);
+    }
+
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)

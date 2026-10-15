@@ -5,9 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-   <link rel="stylesheet" href="{{ asset('build/assets/app-DCw2KBNK.css') }}">
-  <script src="{{ asset('build/assets/app-BvRk9kiK.js') }}" defer></script>
-
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <title>@yield('title', 'Administration') - Carte Rose</title>
 </head>
@@ -121,7 +119,40 @@
                     </li>
 
                     <li>
-                        <a href="#proprietaires"
+                        <a href="{{ route('produits.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                            Produits
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('post-produits.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9-4 9 4-9 4-9-4zm0 5l9 4 9-4M3 17l9 4 9-4" />
+                            </svg>
+                            Produits des postes
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('post-travails.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l8-4v18m6 0V11l-6-4M9 9v.01M9 12v.01M9 15v.01M9 18v.01" />
+                            </svg>
+                            Postes de travail
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('users.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2m12-13a4 4 0 11-8 0 4 4 0 018 0zm5 13v-2a4 4 0 00-3-3.87M17 3.13a4 4 0 010 7.75" />
+                            </svg>
+                            Utilisateurs
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('proprietaires.index') }}"
                             class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
 
                             <svg class="h-5 w-5" fill="none" stroke="currentColor"
