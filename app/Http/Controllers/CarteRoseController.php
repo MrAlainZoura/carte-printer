@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Carte;
+use App\Models\CarteRose;
 use App\Services\CarteService;
 use Illuminate\Http\Request;
 
-class CarteController extends Controller
+class CarteRoseController extends Controller
 {
     protected CarteService $service;
 
@@ -42,7 +42,7 @@ class CarteController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Carte $carte)
+    public function show(CarteRose $carteRose)
     {
         //
     }
@@ -50,7 +50,7 @@ class CarteController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Carte $carte)
+    public function edit(CarteRose $carteRose)
     {
         //
     }
@@ -58,7 +58,7 @@ class CarteController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Carte $carte)
+    public function update(Request $request, CarteRose $carteRose)
     {
         //
     }
@@ -66,7 +66,7 @@ class CarteController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Carte $carte)
+    public function destroy(CarteRose $carteRose)
     {
         //
     }

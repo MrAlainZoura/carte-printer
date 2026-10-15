@@ -128,4 +128,13 @@ class ProprietaireService implements ProprietaireServiceInterface
             'data' => $proprietaire
         ];
     }
+
+    static public function getByTel(string $tel): Propietaire|null
+    {
+        $getProprio = Propietaire::where('telephone', $tel)->first();
+        if($getProprio){
+            return $getProprio;
+        }
+        return null;
+    }
 }
