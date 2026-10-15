@@ -38,6 +38,12 @@ class VehiculesService implements VehiculeServiceInterface
             'puissance' => 'nullable|string|max:255',
             'chassis' => 'nullable|string|max:255',
             'cartinspection' => 'nullable|string|max:255',
+            'carte_numero' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('carte_roses', 'numero'),
+            ],
             'creer_proprietaire' => 'required|in:0,1',
             'propietaire_id' => 'required_if:creer_proprietaire,0|nullable|exists:propietaires,id',
             'nouveau_proprietaire' => 'required_if:creer_proprietaire,1|nullable|array',
@@ -172,7 +178,7 @@ class VehiculesService implements VehiculeServiceInterface
     private function createCarteRoseForVehicule(Vehicule $vehicule, Request $request, PostTravail $post): CarteRose
     {
         $numero = trim((string) $request->input('carte_numero'));
-        if ($numero === '' || CarteRose::query()->where('numero', $numero)->exists()) {
+        if ($numero === '') {
             $numero = $this->generateCarteNumero($vehicule);
         }
 
@@ -194,9 +200,14 @@ class VehiculesService implements VehiculeServiceInterface
     {
         $ordre = CarteRose::query()->count() + 1;
 
-        return 'DGRK/'.str_pad((string) $ordre, 4, '0', STR_PAD_LEFT)
-            .'/'.$vehicule->id
-            .'/'.now()->format('dmY');
+        do {
+            $numero = 'DGRK/'.str_pad((string) $ordre, 4, '0', STR_PAD_LEFT)
+                .'/'.$vehicule->id
+                .'/'.now()->format('dmY');
+            $ordre++;
+        } while (CarteRose::query()->where('numero', $numero)->exists());
+
+        return $numero;
     }
 
     private function valueOrDefault(?string $value, ?string $fallback = null): string

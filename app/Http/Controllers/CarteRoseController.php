@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\CarteRose;
+use App\Models\Vehicule;
 use App\Services\CarteService;
+use App\Support\CurrentPostTravail;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CarteRoseController extends Controller
 {
@@ -50,17 +53,35 @@ class CarteRoseController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(CarteRose $carteRose)
+    public function edit(int $vehiculeId, int $carteRoseId)
     {
-        //
+        $vehicule = $this->findVehicule($vehiculeId);
+        $carteRose = $vehicule->carteRoses()->findOrFail($carteRoseId);
+
+        return view('carte-roses.form', compact('vehicule', 'carteRose'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, CarteRose $carteRose)
+    public function update(Request $request, int $vehiculeId, int $carteRoseId)
     {
-        //
+        $vehicule = $this->findVehicule($vehiculeId);
+        $carteRose = $vehicule->carteRoses()->findOrFail($carteRoseId);
+
+        $validated = $request->validate([
+            'libele' => ['required', 'string', 'max:255'],
+            'numero' => ['required', 'string', 'max:255', Rule::unique('carte_roses', 'numero')->ignore($carteRose->id)],
+            'date_octroi' => ['nullable', 'date'],
+            'date_expiration' => ['nullable', 'date', 'after_or_equal:date_octroi'],
+            'statut' => ['required', Rule::in(['active', 'expiree', 'annulee', 'perdue'])],
+            'observations' => ['nullable', 'string'],
+        ]);
+
+        $carteRose->update($validated);
+
+        return to_route('vehicules.show', $vehicule)
+            ->with('success', 'Carte rose mise à jour. Les autres dossiers n’ont pas été modifiés.');
     }
 
     /**
@@ -80,5 +101,16 @@ class CarteRoseController extends Controller
         }
 
         return $result;
+    }
+
+    private function findVehicule(int $id): Vehicule
+    {
+        $query = Vehicule::query();
+
+        if ($postId = CurrentPostTravail::id()) {
+            $query->where('post_travail_id', $postId);
+        }
+
+        return $query->findOrFail($id);
     }
 }

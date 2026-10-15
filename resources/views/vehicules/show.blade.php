@@ -139,6 +139,13 @@
                     <h2 class="font-semibold text-gray-900">Plaque</h2>
                     <p class="mt-1 text-xs text-gray-500">Créée automatiquement à l’enregistrement du véhicule.</p>
                 </div>
+                @can('plaque.update')
+                    @if($plaque)
+                        <a href="{{ route('plaques.edit', [$vehicule, $plaque]) }}" class="ml-auto rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                            Modifier la plaque
+                        </a>
+                    @endif
+                @endcan
             </div>
             @if($plaque)
                 <div class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
@@ -169,6 +176,13 @@
                     <h2 class="font-semibold text-gray-900">Carte rose</h2>
                     <p class="mt-1 text-xs text-gray-500">Créée automatiquement à l’enregistrement du véhicule.</p>
                 </div>
+                @can('carte_rose.update')
+                    @if($carte)
+                        <a href="{{ route('carte-roses.edit', [$vehicule, $carte]) }}" class="ml-auto rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                            Modifier la carte rose
+                        </a>
+                    @endif
+                @endcan
             </div>
             @if($carte)
                 <div class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">

@@ -85,6 +85,15 @@ Route::middleware(AuthMiddleWare::class)->group(function () {
             Route::delete('/{id}', 'destroy')->middleware('permission:vehicule.delete')->name('destroy');
         });
 
+        Route::get('vehicules/{vehicule}/plaque/{plaque}/edit', [PlaqueController::class, 'edit'])
+            ->middleware('permission:plaque.update')->name('plaques.edit');
+        Route::put('vehicules/{vehicule}/plaque/{plaque}', [PlaqueController::class, 'update'])
+            ->middleware('permission:plaque.update')->name('plaques.update');
+        Route::get('vehicules/{vehicule}/carte-rose/{carteRose}/edit', [CarteRoseController::class, 'edit'])
+            ->middleware('permission:carte_rose.update')->name('carte-roses.edit');
+        Route::put('vehicules/{vehicule}/carte-rose/{carteRose}', [CarteRoseController::class, 'update'])
+            ->middleware('permission:carte_rose.update')->name('carte-roses.update');
+
         // Postes de travail
         Route::get('post-travails', [PostTravailController::class, 'index'])->middleware('permission:post_travail.view')->name('post-travails.index');
         Route::get('post-travails/create', [PostTravailController::class, 'create'])->middleware('permission:post_travail.create')->name('post-travails.create');
