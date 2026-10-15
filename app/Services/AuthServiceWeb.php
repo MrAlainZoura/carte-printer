@@ -79,6 +79,7 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
         $validation = Validator::make($request->all(), [
             'identifiant' => 'required',
             'password' => 'required|min:4',
+            'remember' => ['sometimes', 'boolean'],
         ]);
 
         if ($validation->fails()) {
@@ -87,12 +88,13 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
 
         $identifier = trim((string) $request->identifiant);
         $password = $request->password;
+        $remember = $request->boolean('remember');
         $kind = self::loginKind($identifier);
 
         if ($kind === 'email') {
             $userByEmail = User::whereRaw('LOWER(email) = ?', [mb_strtolower($identifier)])->first();
             if ($userByEmail && Hash::check($password, $userByEmail->password)) {
-                return self::completeLogin($request, $userByEmail);
+                return self::completeLogin($request, $userByEmail, $remember);
             }
         }
 
@@ -110,7 +112,7 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
                 return back()->with('echec', 'Ce numéro est lié à plusieurs comptes. Connectez-vous avec votre email.');
             }
             if ($matchingUsers->count() === 1) {
-                return self::completeLogin($request, $matchingUsers->first());
+                return self::completeLogin($request, $matchingUsers->first(), $remember);
             }
         }
 
@@ -123,15 +125,15 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
             return back()->with('echec', "Ce nom d’utilisateur et mot de passe sont utilisés par plusieurs comptes. Veuillez vous connecter avec votre adresse email.");
         }
         if ($matchingUsers->count() === 1) {
-            return self::completeLogin($request, $matchingUsers->first());
+            return self::completeLogin($request, $matchingUsers->first(), $remember);
         }
 
         return back()->with('echec', "email / téléphone / nom d'utilisateur ou mot de passe incorrect");
     }
 
-    protected static function completeLogin(Request $request, User $user)
+    protected static function completeLogin(Request $request, User $user, bool $remember = false)
     {
-        Auth::login($user);
+        Auth::login($user, $remember);
         $request->session()->regenerate();
         CurrentPostTravail::clear();
 

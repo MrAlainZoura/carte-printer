@@ -58,6 +58,11 @@ Une API JWT minimale existe aussi (login / logout / refresh / me).
        php artisan migrate
        php artisan db:seed
 
+     Si les migrations sont réinitialisées sans exécuter les seeders, se connecter
+     avec un compte administrateur existant. En l'absence totale de poste de
+     travail, l'administrateur est automatiquement dirigé vers l'étape de création
+     du premier poste avant d'accéder au tableau de bord.
+
   4) Lancer en développement
        composer run dev
        # équivalent : serveur + queue + logs (pail) + vite en parallèle
@@ -189,8 +194,14 @@ Contexte "poste courant"
 Web (session)
 -------------
   Middleware : App\Http\Middleware\AuthMiddleWare
-  Routes login/register publiques ; reste protégé.
-  Après login : choix de poste (/choix-poste) sauf admin global.
+  Connexion avec email, téléphone ou nom ; "Se souvenir de moi" crée une
+  authentification persistante (cookie remember Laravel).
+  L'inscription publique reste disponible tant qu'aucun administrateur
+  secondaire n'existe. Une fois un second administrateur créé, l'inscription
+  publique est désactivée ; les comptes sont créés par l'administrateur.
+  Après login : choix de poste (/choix-poste). Si aucun poste n'existe,
+  l'administrateur est redirigé vers l'initialisation du premier poste.
+  Les autres utilisateurs doivent contacter un administrateur.
 
 API (JWT)
 ---------
@@ -228,6 +239,11 @@ Permissions (Spatie, guard web)
   Auth
     GET  /login , /register
     POST /auth/login , /auth/register , /auth/logout
+
+  Initialisation (authentification + rôle admin)
+    GET|POST /initialisation/poste
+      Création du premier poste si aucun poste n'existe ; ce poste est associé
+      à l'administrateur et sélectionné automatiquement pour sa session.
 
   Contexte
     GET|POST /choix-poste
@@ -277,6 +293,14 @@ Permissions (Spatie, guard web)
     Création d'une demande / entrée
     Confirmation (chef_poste / permission confirm) met à jour le stock
     PostProduit
+
+9.4 Première initialisation après réinitialisation de la base
+    Si la table post_travails ne contient aucun poste, l'administrateur ne peut
+    pas accéder au tableau de bord avant d'en créer un.
+    Le formulaire /initialisation/poste crée le premier poste actif, l'associe
+    à l'administrateur comme poste par défaut et le sélectionne dans la session.
+    Cette étape est limitée aux comptes ayant le rôle admin et n'est affichée
+    que tant qu'aucun poste n'existe.
 
 
 --------------------------------------------------------------------------------
@@ -442,7 +466,7 @@ Commandes :
   [ ] migrate + seed
   [ ] composer run dev
   [ ] Se connecter avec un user seedé (voir UserSeeder)
-  [ ] Choisir un poste de travail
+  [ ] Créer le premier poste si aucun n'existe, sinon choisir un poste
   [ ] Créer un véhicule et vérifier plaque + carte rose + stock
   [ ] Tester une permission refusée (rôle agent vs admin)
   [ ] Imprimer une carte rose (PDF/QR)
