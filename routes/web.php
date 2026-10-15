@@ -1,6 +1,8 @@
 <?php
 
-use App\Http\Controllers\CarteController;
+use App\Http\Controllers\CarteRoseController;
+use App\Http\Controllers\PlaqueController;
+use App\Http\Controllers\PostTravailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehiculeController;
 use App\Http\Middleware\AuthMiddleWare;
@@ -58,6 +60,10 @@ Route::middleware(AuthMiddleWare::class)->group(function () {
         return view('dashboard.index');
     })->name('dashboard');
 
-    Route::get('/carte/{id}', [CarteController::class, 'imprimerCarte'])
+    Route::resource('post-travails', PostTravailController::class);
+    Route::resource('carte-roses', CarteRoseController::class);
+    Route::resource('plaques', PlaqueController::class);
+
+    Route::get('/carte/{id}', [CarteRoseController::class, 'imprimerCarte'])
         ->name('carte.imprimer');
 });

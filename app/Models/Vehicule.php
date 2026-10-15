@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Vehicule extends Model
 {
-     protected $fillable = [
+    protected $fillable = [
         'propietaire_id',
+        'post_travail_id',
         'marque',
         'type',
         'couleur',
@@ -23,20 +26,27 @@ class Vehicule extends Model
         'cartinspection',
     ];
 
-    /**
-     * Propriétaire du véhicule.
-     */
-    public function proprietaire0(): BelongsTo
+    public function proprietaire(): BelongsTo
     {
-        return $this->belongsTo(Propietaire::class);
+        return $this->belongsTo(
+            Propietaire::class,
+            'propietaire_id',
+            'id'
+        );
     }
 
-    public function proprietaire(): BelongsTo
-{
-    return $this->belongsTo(
-        Propietaire::class,  // Modèle associé
-        'propietaire_id',    // Clé étrangère dans la table actuelle
-        'id'                 // Clé primaire dans la table proprietaires
-    );
-}
+    public function postTravail(): BelongsTo
+    {
+        return $this->belongsTo(PostTravail::class);
+    }
+
+    public function carteRoses(): HasMany
+    {
+        return $this->hasMany(CarteRose::class);
+    }
+
+    public function plaque(): HasOne
+    {
+        return $this->hasOne(Plaque::class);
+    }
 }
