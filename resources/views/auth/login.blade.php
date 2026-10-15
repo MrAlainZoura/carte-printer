@@ -176,14 +176,20 @@
                     </form>
 
                     <!-- Lien inscription -->
-                    <p class="mt-6 text-center text-sm text-gray-500">
-                        Vous n'avez pas encore de compte ?
+                    @if ($registrationClosed)
+                        <p class="mt-6 text-center text-sm text-gray-500">
+                            La création de compte est désactivée. Veuillez contacter votre administrateur pour obtenir un compte.
+                        </p>
+                    @else
+                        <p class="mt-6 text-center text-sm text-gray-500">
+                            Vous n'avez pas encore de compte ?
 
-                        <a href="{{ route('register') }}"
-                           class="font-semibold text-blue-700 hover:underline">
-                            Créer un compte
-                        </a>
-                    </p>
+                            <a href="{{ route('register') }}"
+                               class="font-semibold text-blue-700 hover:underline">
+                                Créer un compte
+                            </a>
+                        </p>
+                    @endif
 
                 </div>
 

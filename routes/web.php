@@ -15,6 +15,7 @@ use App\Http\Controllers\VehiculeController;
 use App\Http\Middleware\AuthMiddleWare;
 use App\Models\PostTravail;
 use App\Models\User;
+use App\Services\AuthServiceWeb;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
@@ -23,13 +24,20 @@ Route::get('/', function () {
 });
 
 Route::get('/login', function () {
-    return view('auth.login');
+    return view('auth.login', [
+        'registrationClosed' => AuthServiceWeb::hasSecondaryAdmin(),
+    ]);
 })->name('login');
 
 Route::get('/register', function () {
+    if (AuthServiceWeb::hasSecondaryAdmin()) {
+        return redirect()->route('login');
+    }
+
     return view('auth.register', [
         'posts' => PostTravail::query()->where('actif', true)->orderBy('libele')->get(),
         'roles' => User::assignableRoleLabels(),
+        'registrationClosed' => false,
     ]);
 })->name('register');
 

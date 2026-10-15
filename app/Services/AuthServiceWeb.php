@@ -18,8 +18,21 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
 {
     use RespondWithTokenTrait;
 
+    private const SEEDED_ADMIN_EMAIL = 'admin@gmail.com';
+
+    public static function hasSecondaryAdmin(): bool
+    {
+        return User::role('admin')
+            ->where('email', '!=', self::SEEDED_ADMIN_EMAIL)
+            ->exists();
+    }
+
     public static function register(Request $request)
     {
+        if (self::hasSecondaryAdmin()) {
+            return redirect()->route('login');
+        }
+
         $assignableRoles = Role::query()
             ->where('name', '!=', 'admin')
             ->pluck('name')
