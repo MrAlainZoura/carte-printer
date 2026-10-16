@@ -6,7 +6,7 @@ Stack    : Laravel 13 / PHP 8.3 / Blade / Vite / Spatie Permission / JWT / DomPD
 Objectif : Gestion des cartes roses, plaques d'immatriculation, véhicules,
            propriétaires et stocks de produits par poste de travail.
 
-Dernière mise à jour : 2026-10-15
+Dernière mise à jour : 2026-10-16
 
 
 --------------------------------------------------------------------------------
@@ -131,12 +131,17 @@ Flux typique requête web
 
   Vehicule  (SoftDeletes)
     - belongsTo Propietaire, PostTravail
-    - hasOne Plaque
+    - belongsTo Plaque via plaque_id nullable
     - hasMany CarteRose
+    - hasMany HistoriqueProprietaireVehicule
 
   Plaque
-    - belongsTo Vehicule, PostTravail
+    - belongsTo PostTravail ; vehicule_id historique nullable
     - code unique (immatriculation), statut (ex. attribuee)
+
+  HistoriqueProprietaireVehicule
+    - conserve l'ancien et le nouveau propriétaire, l'utilisateur et la date
+      de chaque transfert de propriété
 
   CarteRose
     - belongsTo Vehicule, PostTravail, User
@@ -220,16 +225,22 @@ Permissions (Spatie, guard web)
 
   Rôles seedés :
     admin       — toutes les permissions
-    chef_poste  — view + create (+ approvisionnement.confirm)
-    agent       — view + create
+    chef_poste  — view + create + vehicule.transfer (+ approvisionnement.confirm)
+    agent       — view + create + vehicule.transfer
     lecteur     — view + create
+  Pour mettre à jour les rôles d'une base déjà en ligne sans relancer le seeder
+  complet des permissions :
+    php artisan db:seed --class=UpdateVehiculeTransferPermissionSeeder
 
   Permissions principales :
     vehicule.* , carte_rose.* , plaque.* , post_travail.* ,
     proprietaire.* , produit.* , post_produit.* ,
     approvisionnement.* , user.* , role.manage , dashboard.global
+  vehicule.transfer autorise le transfert de propriétaire et le remplacement
+  de plaque sans accorder le droit général vehicule.update (modification du dossier).
 
-  Seeder : database/seeders/RolePermissionSeeder.php
+  Seeder initial : database/seeders/RolePermissionSeeder.php
+  Mise à jour ciblée des rôles existants : database/seeders/UpdateVehiculeTransferPermissionSeeder.php
 
 
 --------------------------------------------------------------------------------
@@ -253,6 +264,9 @@ Permissions (Spatie, guard web)
 
   Métier (sous middleware auth + post.selected)
     /vehicules           CRUD + show
+    /vehicules/{id}/proprietaire             transfert du propriétaire
+    /vehicules/{id}/historique-proprietaires historique des transferts
+    /vehicules/{id}/plaque                   remplacement de la plaque
     /vehicules/{v}/plaque/{p}/edit|PUT
     /vehicules/{v}/carte-rose/{c}/edit|PUT
     /carte-roses         index, create, store, show
@@ -279,12 +293,28 @@ Permissions (Spatie, guard web)
          immatriculation, usage
        - carte_numero optionnel (unique si fourni)
     3. VehiculesService::store
-       - crée propriétaire si besoin (ou réutilise par téléphone)
-       - crée véhicule + plaque + carte rose
-       - consomme stock PostProduit (2 unités max, orderBy id)
+       - vérifie la disponibilité de la plaque et des stocks plaque/carte rose
+       - crée la plaque avant le véhicule et lie son id via plaque_id
+       - crée le propriétaire si besoin, puis véhicule et carte rose
+       - décrémente les stocks plaque et carte rose dans la transaction
     4. Redirect / message succès
 
-9.2 Impression carte rose
+9.2 Changement de propriétaire
+    - action dédiée depuis le détail du véhicule (permission vehicule.transfer)
+    - le propriétaire actuel est remplacé et le transfert est enregistré dans
+      historique_proprietaires_vehicules avec ancien/nouveau propriétaire,
+      date et utilisateur connecté
+    - le formulaire standard de modification du véhicule ne change pas le
+      propriétaire
+
+9.3 Changement de plaque
+    - action dédiée depuis le détail (permission vehicule.transfer ou plaque.update)
+    - refuse un code déjà attribué et exige une unité de stock plaque au poste
+    - crée la nouvelle plaque, met à jour plaque_id et immatriculation, annule
+      l'ancienne plaque et décrémente le stock dans une transaction
+    - le formulaire standard de modification du véhicule ne change pas la plaque
+
+9.4 Impression carte rose
     Route nommée carte.imprimer
     Permission : carte_rose.print
     DomPDF + QR (simplesoftwareio/simple-qrcode) via qr_token
@@ -451,8 +481,8 @@ Commandes :
     sans migration de rename.
   - Routes /test-email et /test-php présentes (à retirer en prod).
   - API JWT encore minimale (auth seulement) ; le métier est surtout web.
-  - Consommation stock à la création véhicule : décrémente jusqu'à 2
-    PostProduit sans vérifier le type de produit — à valider métier.
+  - La création véhicule et le remplacement de plaque exigent un stock
+    disponible de produits « Plaque » et/ou « Carte rose » au poste courant.
   - planTravail.txt / uml*.txt à la racine concernent un autre projet
     (GPaie) : ne pas les confondre avec le domaine CarteRose.
 
@@ -474,3 +504,20 @@ Commandes :
 ================================================================================
   Fin de la documentation développeur — CarteRose
 ================================================================================
+
+
+erreurs sodium et artisan
+**composer 
+
+7@fr-int-web1270 vcarte]$ /opt/alt/php84/usr/bin/php -i | grep extension_dir
+extension_dir => /opt/alt/php84/usr/lib64/php/modules => /opt/alt/php84/usr/lib64/php/modules
+sqlite3.extension_dir => no value => no value
+[u489902807@fr-int-web1270 vcarte]$ ls -l /opt/alt/php84/usr/lib64/php/modules/sodium.so
+-rwxr-xr-x 1 root 996 121680 Oct  6 09:09 /opt/alt/php84/usr/lib64/php/modules/sodium.so
+[u489902807@fr-int-web1270 vcarte]$ /opt/alt/php84/usr/bin/php -d extension=/opt/alt/php84/usr/lib64/php/modules/sodium.so -m | grep -i sodium
+sodium
+[u489902807@fr-int-web1270 vcarte]$ /opt/alt/php84/usr/bin/php -d extension=/opt/alt/php84/usr/lib64/php/modules/sodium.so /usr/local/bin/composer install
+
+**migration
+
+/opt/alt/php84/usr/bin/php artisan migrate:refresh --seed

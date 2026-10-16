@@ -20,7 +20,7 @@
             </div>
             <h1 class="text-2xl font-bold tracking-tight text-gray-900">Modifier le véhicule</h1>
             <p class="mt-2 text-sm text-gray-500">
-                Mettez à jour les informations du dossier. La plaque liée sera synchronisée avec l’immatriculation.
+                Mettez à jour les informations du dossier. Le changement de propriétaire ou de plaque se fait séparément depuis le détail du véhicule.
             </p>
         </div>
         <a href="{{ route('vehicules.show', $vehicule->id) }}"
@@ -43,28 +43,6 @@
     <form action="{{ route('vehicules.update', $vehicule->id) }}" method="POST" class="space-y-6">
         @csrf
         @method('PUT')
-
-        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div class="border-b border-gray-200 px-6 py-5">
-                <h2 class="font-semibold text-gray-900">Propriétaire</h2>
-            </div>
-            <div class="p-6">
-                <label for="propietaire_id" class="mb-2 block text-sm font-medium text-gray-900">
-                    Propriétaire <span class="text-red-500">*</span>
-                </label>
-                <select name="propietaire_id" id="propietaire_id" required
-                        class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm text-gray-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-200">
-                    <option value="">Sélectionner un propriétaire</option>
-                    @foreach($proprietaires as $proprietaire)
-                        <option value="{{ $proprietaire->id }}" @selected(old('propietaire_id', $vehicule->propietaire_id) == $proprietaire->id)>
-                            {{ $proprietaire->nom_complet ?: $proprietaire->raison_sociale ?: 'Propriétaire #'.$proprietaire->id }}
-                            @if($proprietaire->telephone) — {{ $proprietaire->telephone }} @endif
-                        </option>
-                    @endforeach
-                </select>
-                @error('propietaire_id')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
-            </div>
-        </div>
 
         <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 px-6 py-5">
@@ -94,13 +72,6 @@
                            value="{{ old('couleur', $vehicule->couleur) }}"
                            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200">
                     @error('couleur')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label for="immatriculation" class="mb-2 block text-sm font-medium">Immatriculation <span class="text-red-500">*</span></label>
-                    <input type="text" name="immatriculation" id="immatriculation" required maxlength="255"
-                           value="{{ old('immatriculation', $vehicule->immatriculation) }}"
-                           class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm uppercase focus:border-blue-600 focus:ring-2 focus:ring-blue-200">
-                    @error('immatriculation')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
                 <div class="md:col-span-2">
                     <label for="usage" class="mb-2 block text-sm font-medium">Usage <span class="text-red-500">*</span></label>

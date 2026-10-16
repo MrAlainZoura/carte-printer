@@ -57,18 +57,7 @@
                     @error('role')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
             @endif
-            @if(!$record->exists || auth()->user()->hasRole('admin'))
-                <div>
-                    <label for="password" class="mb-2 block text-sm font-medium">{{ $record->exists ? 'Nouveau mot de passe' : 'Mot de passe *' }}</label>
-                    <input id="password" name="password" type="password" @required(!$record->exists) autocomplete="new-password" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm">
-                    @error('password')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                    @if($record->exists)<p class="mt-1 text-xs text-gray-500">Laissez vide pour conserver le mot de passe actuel.</p>@endif
-                </div>
-                <div>
-                    <label for="password_confirmation" class="mb-2 block text-sm font-medium">Confirmation {{ $record->exists ? '' : 'du mot de passe *' }}</label>
-                    <input id="password_confirmation" name="password_confirmation" type="password" @required(!$record->exists) autocomplete="new-password" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm">
-                </div>
-            @endif
+           
         </div>
         <div class="mt-7 flex justify-end gap-3 border-t border-gray-100 pt-5">
             <a href="{{ route('users.index') }}" class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700">Annuler</a>

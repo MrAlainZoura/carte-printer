@@ -38,6 +38,16 @@
                 Modifier
             </a>
             @endcan
+            @can('vehicule.transfer')
+            <a href="{{ route('vehicules.proprietaires.transfer', $vehicule->id) }}"
+               class="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-800 transition hover:bg-blue-100">
+                Changer de propriétaire
+            </a>
+            @endcan
+            <a href="{{ route('vehicules.proprietaires.history', $vehicule->id) }}"
+               class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+                Historique des propriétaires
+            </a>
             <a href="{{ route('vehicules.index') }}"
                class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
                 Retour à la liste
@@ -139,12 +149,10 @@
                     <h2 class="font-semibold text-gray-900">Plaque</h2>
                     <p class="mt-1 text-xs text-gray-500">Créée automatiquement à l’enregistrement du véhicule.</p>
                 </div>
-                @canany(['vehicule.update', 'plaque.update'])
-                    @if($plaque)
-                        <a href="{{ route('plaques.edit', [$vehicule, $plaque]) }}" class="ml-auto rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                            Modifier la plaque
+                @canany(['vehicule.transfer', 'plaque.update'])
+                        <a href="{{ route('vehicules.plaque.change', $vehicule->id) }}" class="ml-auto rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                            Changer la plaque
                         </a>
-                    @endif
                 @endcan
             </div>
             @if($plaque)

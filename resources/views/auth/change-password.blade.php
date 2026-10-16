@@ -47,7 +47,7 @@
                 </div>
 
                 <div class="flex justify-end gap-3 border-t border-gray-100 pt-5">
-                    <a href="{{ route('postes.select') }}" class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700">
+                    <a href="{{ route('users.profile') }}" class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700">
                         Annuler
                     </a>
                     <button type="submit" class="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">

@@ -18,7 +18,7 @@
         <div class="mb-5 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">{{ session('success') }}</div>
     @endif
 
-    <div class="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div class="hidden mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <h2 class="mb-4 text-lg font-semibold text-gray-900">Permissions attribuées</h2>
         @if($role->permissions->isEmpty())
             <p class="text-sm text-gray-500">Aucune permission.</p>

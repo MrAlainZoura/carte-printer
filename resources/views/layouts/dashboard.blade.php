@@ -187,7 +187,7 @@
                             Collaborateurs
                         </a>
                     </li>
-                    @else
+                    @endrole
                     <li>
                         <a href="{{ route('users.profile') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
                             <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -196,8 +196,6 @@
                             Mon profil
                         </a>
                     </li>
-                    @endrole
-
                     @can('role.manage')
                     <li>
                         <a href="{{ route('roles.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100">
