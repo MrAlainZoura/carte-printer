@@ -13,6 +13,12 @@
         </a>
     </div>
 
+    @if(session('success'))
+        <div class="mb-5 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800" role="status">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <section aria-label="Statistiques de mon activité" class="mb-6 grid gap-4 sm:grid-cols-3">
         @foreach($stats as $label => $value)
             <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">

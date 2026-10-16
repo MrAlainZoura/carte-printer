@@ -6,6 +6,7 @@ use App\Models\CarteRose;
 use App\Models\PostTravail;
 use App\Models\User;
 use App\Services\AuthServiceWeb;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -53,7 +54,7 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $query = User::query()->with(['roles', 'postTravails']);
+        $query = $this->visibleUsersQuery()->with(['roles', 'postTravails']);
         if ($search = $request->string('search')->trim()->toString()) {
             $query->where(fn ($builder) => $builder
                 ->where('name', 'like', "%{$search}%")
@@ -88,9 +89,17 @@ class UserController extends Controller
 
     public function show(int $id)
     {
-        $record = User::with(['postTravails', 'roles'])->findOrFail($id);
+        $record = $this->visibleUsersQuery()->with(['postTravails', 'roles'])->findOrFail($id);
+        $cards = CarteRose::query()->where('user_id', $record->id);
 
-        return view('users.show', compact('record'));
+        return view('users.show', [
+            'record' => $record,
+            'stats' => [
+                'Cartes créées' => (clone $cards)->count(),
+                'Cartes actives' => (clone $cards)->where('statut', 'active')->count(),
+                'Véhicules concernés' => (clone $cards)->distinct('vehicule_id')->count('vehicule_id'),
+            ],
+        ]);
     }
 
     public function profile()
@@ -110,12 +119,12 @@ class UserController extends Controller
 
     public function edit(int $id)
     {
-        return $this->form(User::with(['postTravails', 'roles'])->findOrFail($id), 'Modifier l’utilisateur');
+        return $this->form($this->visibleUsersQuery()->with(['postTravails', 'roles'])->findOrFail($id), 'Modifier l’utilisateur');
     }
 
     public function update(Request $request, int $id)
     {
-        $record = User::findOrFail($id);
+        $record = $this->visibleUsersQuery()->findOrFail($id);
         $isAdmin = auth()->user()?->hasRole('admin') ?? false;
         $validated = $request->validate($this->rules($record, $isAdmin));
 
@@ -157,7 +166,7 @@ class UserController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return to_route('postes.select')->with('success', 'Votre mot de passe a été modifié.');
+        return to_route('users.profile')->with('success', 'Votre mot de passe a été modifié.');
     }
 
     public function resetPassword(int $id)
@@ -165,18 +174,18 @@ class UserController extends Controller
         abort_unless(auth()->user()?->hasRole('admin'), 403);
 
         $temporaryPassword = Str::password(16);
-        User::findOrFail($id)->update([
+        $this->visibleUsersQuery()->findOrFail($id)->update([
             'password' => Hash::make($temporaryPassword),
         ]);
 
-        return to_route('users.index')
+        return to_route('users.show', $id)
             ->with('success', 'Mot de passe réinitialisé. Communiquez ce mot de passe temporaire à l’utilisateur.')
             ->with('temporary_password', $temporaryPassword);
     }
 
     public function destroy(int $id)
     {
-        User::findOrFail($id)->delete();
+        $this->visibleUsersQuery()->findOrFail($id)->delete();
 
         return to_route('users.index')->with('success', 'Utilisateur supprimé avec succès.');
     }
@@ -231,5 +240,13 @@ class UserController extends Controller
             'posts' => PostTravail::query()->where('actif', true)->orderBy('libele')->get(),
             'roles' => $roles,
         ]);
+    }
+
+    private function visibleUsersQuery(): Builder
+    {
+        return User::query()->where(function ($query) {
+            $query->where('id', '!=', 1)
+                ->orWhere('id', auth()->id());
+        });
     }
 }

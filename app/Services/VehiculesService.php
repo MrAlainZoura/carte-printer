@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class VehiculesService implements VehiculeServiceInterface
 {
@@ -23,13 +24,19 @@ class VehiculesService implements VehiculeServiceInterface
     {
         $request->merge([
             'creer_proprietaire' => $request->boolean('creer_proprietaire') ? '1' : '0',
+            'immatriculation' => trim((string) $request->input('immatriculation')),
         ]);
 
         $request->validate([
             'marque' => 'required|string|max:255',
             'type' => 'required|string|max:255',
             'couleur' => 'required|string|max:255',
-            'immatriculation' => 'required|string|max:255',
+            'immatriculation' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('plaques', 'code'),
+            ],
             'usage' => 'required|string|max:255',
             'etat' => 'nullable|string|max:255',
             'an_fabrication' => 'nullable|string|max:255',
@@ -47,9 +54,12 @@ class VehiculesService implements VehiculeServiceInterface
             'creer_proprietaire' => 'required|in:0,1',
             'propietaire_id' => 'required_if:creer_proprietaire,0|nullable|exists:propietaires,id',
             'nouveau_proprietaire' => 'required_if:creer_proprietaire,1|nullable|array',
+        ], [
+            'immatriculation.unique' => 'Cette carte est déjà occupée.',
         ]);
 
-        $proprietaireId = null;
+        $proprietaireId = $request->input('propietaire_id');
+        $nouveauProprietaire = null;
 
         if ($request->creer_proprietaire === '1') {
             $request->validate([
@@ -98,9 +108,7 @@ class VehiculesService implements VehiculeServiceInterface
             if ($checkProprio != null) {
                 $proprietaireId = $checkProprio->id;
             } else {
-                $requestProprietaire = new Request($request->input('nouveau_proprietaire'));
-                $saveProprietaire = ProprietaireService::store($requestProprietaire);
-                $proprietaireId = $saveProprietaire['data']->id;
+                $nouveauProprietaire = $request->input('nouveau_proprietaire');
             }
         }
 
@@ -126,21 +134,26 @@ class VehiculesService implements VehiculeServiceInterface
             'chassis',
             'cartinspection',
         ]);
-        $data['propietaire_id'] = $data['propietaire_id'] ?? $proprietaireId;
+        $data['propietaire_id'] = $proprietaireId;
         $data['post_travail_id'] = $post->id;
 
-        $vehicule = DB::transaction(function () use ($request, $data, $post) {
+        $vehicule = DB::transaction(function () use ($request, $data, $post, $nouveauProprietaire) {
+            $this->assertPlaqueAvailable($request);
+            $stocks = $this->lockRequiredStocks($post);
+
+            if ($nouveauProprietaire !== null) {
+                $requestProprietaire = new Request($nouveauProprietaire);
+                $saveProprietaire = ProprietaireService::store($requestProprietaire);
+                $data['propietaire_id'] = $saveProprietaire['data']->id;
+            }
+
             $vehicule = Vehicule::create($data);
 
             $this->createPlaqueForVehicule($vehicule, $request, $post);
             $this->createCarteRoseForVehicule($vehicule, $request, $post);
 
-            PostProduit::query()
-                ->where('post_travail_id', $post->id)
-                ->where('quantite', '>', 0)
-                ->orderBy('id')
-                ->limit(2)
-                ->decrement('quantite', 1);
+            $stocks['plaque']->decrement('quantite');
+            $stocks['carte rose']->decrement('quantite');
 
             return $vehicule->load(['proprietaire', 'plaque', 'carteRoses', 'postTravail']);
         });
@@ -151,15 +164,59 @@ class VehiculesService implements VehiculeServiceInterface
         ];
     }
 
-    private function createPlaqueForVehicule(Vehicule $vehicule, Request $request, PostTravail $post): Plaque
+    /**
+     * @return array<string, PostProduit>
+     */
+    private function lockRequiredStocks(PostTravail $post): array
+    {
+        $stocks = [];
+        $missing = [];
+
+        foreach (['carte rose', 'plaque'] as $productName) {
+            $stock = PostProduit::query()
+                ->where('post_travail_id', $post->id)
+                ->whereHas('produit', fn ($query) => $query
+                    ->whereRaw('LOWER(TRIM(libele)) = ?', [$productName]))
+                ->lockForUpdate()
+                ->first();
+
+            if (! $stock || (float) $stock->quantite < 1) {
+                $missing[] = $productName;
+
+                continue;
+            }
+
+            $stocks[$productName] = $stock;
+        }
+
+        if ($missing !== []) {
+            throw ValidationException::withMessages([
+                'stock' => 'Stock indisponible pour : '.implode(' et ', $missing)
+                    .'. Veuillez approvisionner ces produits avant d’enregistrer le véhicule.',
+            ]);
+        }
+
+        return $stocks;
+    }
+
+    private function assertPlaqueAvailable(Request $request): void
     {
         $code = $this->valueOrDefault(
             $request->input('immatriculation') ?: $request->input('plaque_code')
         );
 
         if (Plaque::query()->where('code', $code)->exists()) {
-            $code = $code.'-'.$vehicule->id;
+            throw ValidationException::withMessages([
+                'immatriculation' => 'Cette carte est déjà occupée.',
+            ]);
         }
+    }
+
+    private function createPlaqueForVehicule(Vehicule $vehicule, Request $request, PostTravail $post): Plaque
+    {
+        $code = $this->valueOrDefault(
+            $request->input('immatriculation') ?: $request->input('plaque_code')
+        );
 
         return Plaque::create([
             'post_travail_id' => $post->id,

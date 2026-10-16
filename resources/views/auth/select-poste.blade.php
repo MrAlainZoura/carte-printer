@@ -83,12 +83,6 @@
                 </div>
             @endif
 
-            <div class="mt-6 text-center">
-                <a href="{{ route('password.change') }}" class="text-sm font-semibold text-blue-700 hover:underline">
-                    Changer mon mot de passe
-                </a>
-            </div>
-
             <form method="POST" action="{{ route('auth.logout') }}" class="mt-6 text-center">
                 @csrf
                 <button type="submit" class="text-sm text-gray-500 hover:text-gray-800 hover:underline">
