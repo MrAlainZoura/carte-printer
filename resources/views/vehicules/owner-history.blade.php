@@ -13,7 +13,7 @@
             <h1 class="mt-2 text-2xl font-bold text-gray-900">Historique des propriétaires</h1>
             <p class="mt-1 text-sm text-gray-500">Transferts enregistrés pour ce véhicule.</p>
         </div>
-        @can('vehicule.update')
+        @can('vehicule.transfer')
             <a href="{{ route('vehicules.proprietaires.transfer', $vehicule->id) }}" class="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
                 Changer de propriétaire
             </a>

@@ -225,18 +225,22 @@ Permissions (Spatie, guard web)
 
   Rôles seedés :
     admin       — toutes les permissions
-    chef_poste  — view + create + vehicule.update (+ approvisionnement.confirm)
-    agent       — view + create + vehicule.update
+    chef_poste  — view + create + vehicule.transfer (+ approvisionnement.confirm)
+    agent       — view + create + vehicule.transfer
     lecteur     — view + create
-  Pour appliquer les permissions modifiées à une base existante :
-    php artisan db:seed --class=RolePermissionSeeder
+  Pour mettre à jour les rôles d'une base déjà en ligne sans relancer le seeder
+  complet des permissions :
+    php artisan db:seed --class=UpdateVehiculeTransferPermissionSeeder
 
   Permissions principales :
     vehicule.* , carte_rose.* , plaque.* , post_travail.* ,
     proprietaire.* , produit.* , post_produit.* ,
     approvisionnement.* , user.* , role.manage , dashboard.global
+  vehicule.transfer autorise le transfert de propriétaire et le remplacement
+  de plaque sans accorder le droit général vehicule.update (modification du dossier).
 
-  Seeder : database/seeders/RolePermissionSeeder.php
+  Seeder initial : database/seeders/RolePermissionSeeder.php
+  Mise à jour ciblée des rôles existants : database/seeders/UpdateVehiculeTransferPermissionSeeder.php
 
 
 --------------------------------------------------------------------------------
@@ -296,7 +300,7 @@ Permissions (Spatie, guard web)
     4. Redirect / message succès
 
 9.2 Changement de propriétaire
-    - action dédiée depuis le détail du véhicule (permission vehicule.update)
+    - action dédiée depuis le détail du véhicule (permission vehicule.transfer)
     - le propriétaire actuel est remplacé et le transfert est enregistré dans
       historique_proprietaires_vehicules avec ancien/nouveau propriétaire,
       date et utilisateur connecté
@@ -304,7 +308,7 @@ Permissions (Spatie, guard web)
       propriétaire
 
 9.3 Changement de plaque
-    - action dédiée depuis le détail (permission vehicule.update ou plaque.update)
+    - action dédiée depuis le détail (permission vehicule.transfer ou plaque.update)
     - refuse un code déjà attribué et exige une unité de stock plaque au poste
     - crée la nouvelle plaque, met à jour plaque_id et immatriculation, annule
       l'ancienne plaque et décrémente le stock dans une transaction
