@@ -55,6 +55,31 @@ class VehiculeController extends Controller
         return $this->service->update($id, $request);
     }
 
+    public function transferOwnerForm(int $id)
+    {
+        return $this->service->transferOwnerForm($id);
+    }
+
+    public function transferOwner(Request $request, int $id)
+    {
+        return $this->service->transferOwner($id, $request);
+    }
+
+    public function ownerHistory(int $id)
+    {
+        return $this->service->ownerHistory($id);
+    }
+
+    public function changePlaqueForm(int $id)
+    {
+        return $this->service->changePlaqueForm($id);
+    }
+
+    public function changePlaque(Request $request, int $id)
+    {
+        return $this->service->changePlaque($id, $request);
+    }
+
     public function destroy(int $id)
     {
         $vehicule = Vehicule::findOrFail($id);

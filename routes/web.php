@@ -94,6 +94,11 @@ Route::middleware(AuthMiddleWare::class)->group(function () {
             Route::get('/create', 'create')->middleware('permission:vehicule.create')->name('create');
             Route::post('/', 'store')->middleware('permission:vehicule.create')->name('store');
             Route::get('/show/{id}', 'show')->middleware('permission:vehicule.view')->name('show');
+            Route::get('/{id}/proprietaire', 'transferOwnerForm')->middleware('permission:vehicule.update')->name('proprietaires.transfer');
+            Route::post('/{id}/proprietaire', 'transferOwner')->middleware('permission:vehicule.update')->name('proprietaires.transfer.store');
+            Route::get('/{id}/historique-proprietaires', 'ownerHistory')->middleware('permission:vehicule.view')->name('proprietaires.history');
+            Route::get('/{id}/plaque', 'changePlaqueForm')->middleware('permission:vehicule.update|plaque.update')->name('plaque.change');
+            Route::post('/{id}/plaque', 'changePlaque')->middleware('permission:vehicule.update|plaque.update')->name('plaque.change.store');
             Route::get('/{id}/edit', 'edit')->middleware('permission:vehicule.update')->name('edit');
             Route::put('/{id}', 'update')->middleware('permission:vehicule.update')->name('update');
             Route::delete('/{id}', 'destroy')->middleware('permission:vehicule.delete')->name('destroy');

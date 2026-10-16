@@ -22,9 +22,9 @@
         @method('PUT')
 
         <div>
-            <label for="code" class="mb-2 block text-sm font-medium">Code de la plaque *</label>
-            <input id="code" name="code" type="text" maxlength="255" required value="{{ old('code', $plaque->code) }}" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm">
-            @error('code')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+            <span class="mb-2 block text-sm font-medium">Code de la plaque</span>
+            <p class="rounded-lg border border-gray-200 bg-gray-100 p-3 text-sm text-gray-700">{{ $plaque->code }}</p>
+            <p class="mt-1 text-xs text-gray-500">Pour remplacer la plaque, utilisez l’action dédiée depuis le détail du véhicule.</p>
         </div>
         <div>
             <label for="ville" class="mb-2 block text-sm font-medium">Ville</label>

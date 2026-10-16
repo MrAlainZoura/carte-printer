@@ -6,6 +6,7 @@ use App\Models\Plaque;
 use App\Models\Vehicule;
 use App\Support\CurrentPostTravail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class PlaqueController extends Controller
@@ -48,7 +49,7 @@ class PlaqueController extends Controller
     public function edit(int $vehiculeId, int $plaqueId)
     {
         $vehicule = $this->findVehicule($vehiculeId);
-        $plaque = $vehicule->plaque()->findOrFail($plaqueId);
+        $plaque = $vehicule->plaque()->whereKey($plaqueId)->firstOrFail();
 
         return view('plaques.form', compact('vehicule', 'plaque'));
     }
@@ -59,17 +60,18 @@ class PlaqueController extends Controller
     public function update(Request $request, int $vehiculeId, int $plaqueId)
     {
         $vehicule = $this->findVehicule($vehiculeId);
-        $plaque = $vehicule->plaque()->findOrFail($plaqueId);
+        $plaque = $vehicule->plaque()->whereKey($plaqueId)->firstOrFail();
 
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:255', Rule::unique('plaques', 'code')->ignore($plaque->id)],
             'ville' => ['nullable', 'string', 'max:255'],
             'serie' => ['nullable', 'string', 'max:255'],
             'statut' => ['required', Rule::in(['disponible', 'attribuee', 'annulee'])],
             'date_attribution' => ['nullable', 'date'],
         ]);
 
-        $plaque->update($validated);
+        DB::transaction(function () use ($plaque, $validated) {
+            $plaque->update($validated);
+        });
 
         return to_route('vehicules.show', $vehicule)
             ->with('success', 'Plaque mise à jour. Les autres dossiers n’ont pas été modifiés.');
@@ -91,6 +93,6 @@ class PlaqueController extends Controller
             $query->where('post_travail_id', $postId);
         }
 
-        return $query->findOrFail($id);
+        return $query->with('plaque')->findOrFail($id);
     }
 }

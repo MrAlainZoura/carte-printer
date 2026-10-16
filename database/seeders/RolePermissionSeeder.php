@@ -76,6 +76,10 @@ class RolePermissionSeeder extends Seeder
 
         Role::findByName('chef_poste', 'web')->givePermissionTo('approvisionnement.confirm');
 
+        foreach (['chef_poste', 'agent'] as $roleName) {
+            Role::findByName($roleName, 'web')->givePermissionTo('vehicule.update');
+        }
+
         // Impression carte rose : tous sauf lecteur
         foreach (['chef_poste', 'agent'] as $roleName) {
             Role::findByName($roleName, 'web')->givePermissionTo('carte_rose.print');

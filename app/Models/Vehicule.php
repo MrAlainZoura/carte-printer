@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Vehicule extends Model
@@ -14,6 +13,7 @@ class Vehicule extends Model
 
     protected $fillable = [
         'propietaire_id',
+        'plaque_id',
         'post_travail_id',
         'marque',
         'type',
@@ -48,8 +48,13 @@ class Vehicule extends Model
         return $this->hasMany(CarteRose::class);
     }
 
-    public function plaque(): HasOne
+    public function plaque(): BelongsTo
     {
-        return $this->hasOne(Plaque::class);
+        return $this->belongsTo(Plaque::class);
+    }
+
+    public function historiqueProprietaires(): HasMany
+    {
+        return $this->hasMany(HistoriqueProprietaireVehicule::class);
     }
 }
