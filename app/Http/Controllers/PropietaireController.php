@@ -2,92 +2,67 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Propietaire;
+use App\Services\ProprietaireWebService;
 use Illuminate\Http\Request;
 
 class PropietaireController extends Controller
 {
+    public function __construct(private readonly ProprietaireWebService $service)
+    {
+    }
+
     public function index(Request $request)
     {
-        $query = Propietaire::withCount('vehicules');
-        if ($search = $request->string('search')->trim()->toString()) {
-            $query->where(fn ($builder) => $builder
-                ->where('nom_complet', 'like', "%{$search}%")
-                ->orWhere('raison_sociale', 'like', "%{$search}%")
-                ->orWhere('telephone', 'like', "%{$search}%")
-                ->orWhere('impot', 'like', "%{$search}%"));
-        }
-        if ($type = $request->string('type')->trim()->toString()) {
-            $query->where('type', $type);
-        }
+        $result = $this->service->index($request);
 
-        return view('proprietaires.index', [
-            'proprietaires' => $query->latest()->paginate(15)->withQueryString(),
-        ]);
+        return view('proprietaires.index', $result['data']);
     }
 
     public function create()
     {
-        return $this->form(new Propietaire(), 'Créer un propriétaire');
+        $result = $this->service->formData();
+
+        return $this->form($result['data']['record'], 'Créer un propriétaire');
     }
 
     public function store(Request $request)
     {
-        Propietaire::create($request->validate($this->rules()));
+        $result = $this->service->store($request);
 
-        return to_route('proprietaires.index')->with('success', 'Propriétaire créé avec succès.');
+        return to_route('proprietaires.index')->with('success', $result['message']);
     }
 
     public function show(int $id)
     {
-        $record = Propietaire::withCount('vehicules')->findOrFail($id);
+        $result = $this->service->show($id);
 
-        return view('proprietaires.show', compact('record'));
+        return view('proprietaires.show', $result['data']);
     }
 
     public function edit(int $id)
     {
-        return $this->form(Propietaire::findOrFail($id), 'Modifier le propriétaire');
+        $result = $this->service->formData($id);
+
+        return $this->form($result['data']['record'], 'Modifier le propriétaire');
     }
 
     public function update(Request $request, int $id)
     {
-        $record = Propietaire::findOrFail($id);
-        $record->update($request->validate($this->rules()));
+        $result = $this->service->update($request, $id);
 
-        return to_route('proprietaires.index')->with('success', 'Propriétaire modifié avec succès.');
+        return to_route('proprietaires.index')->with('success', $result['message']);
     }
 
     public function destroy(int $id)
     {
-        $proprietaire = Propietaire::findOrFail($id);
-        if ($proprietaire->vehicules()->withTrashed()->exists()) {
-            return to_route('proprietaires.index')
-                ->with('error', 'Ce propriétaire ne peut pas être supprimé tant que des véhicules lui sont associés.');
-        }
+        $result = $this->service->delete($id);
+        $flash = $result['deleted'] ? 'success' : 'error';
 
-        $proprietaire->delete();
-
-        return to_route('proprietaires.index')->with('success', 'Propriétaire supprimé avec succès.');
+        return to_route('proprietaires.index')->with($flash, $result['message']);
     }
 
-    private function rules(): array
+    private function form($record, string $title)
     {
-        return [
-            'type' => ['required', 'string', 'max:255'],
-            'nom_complet' => ['nullable', 'string', 'max:255'],
-            'raison_sociale' => ['nullable', 'string', 'max:255'],
-            'adresse_physique' => ['nullable', 'string', 'max:255'],
-            'telephone' => ['nullable', 'string', 'max:255'],
-            'impot' => ['nullable', 'string', 'max:255'],
-        ];
-    }
-
-    private function form(Propietaire $record, string $title)
-    {
-        return view('proprietaires.form', [
-            'title' => $title,
-            'record' => $record,
-        ]);
+        return view('proprietaires.form', compact('title', 'record'));
     }
 }

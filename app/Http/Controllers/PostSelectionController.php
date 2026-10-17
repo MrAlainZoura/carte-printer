@@ -2,62 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PostTravail;
+use App\Services\PostSelectionService;
 use App\Support\CurrentPostTravail;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class PostSelectionController extends Controller
 {
+    public function __construct(private readonly PostSelectionService $service)
+    {
+    }
+
     public function show()
     {
-        $user = Auth::user();
-
-        if ($user->hasRole('admin') && ! PostTravail::query()->exists()) {
+        $result = $this->service->options();
+        if ($result['data']['needsInitialSetup']) {
             return redirect()->route('post-travails.initial-setup');
         }
 
-        $posts = $user->hasRole('admin')
-            ? PostTravail::query()->orderBy('libele')->get()
-            : $user->postTravails()->orderBy('libele')->get();
-
         return view('auth.select-poste', [
-            'posts' => $posts,
-            'isAdmin' => $user->hasRole('admin'),
+            'posts' => $result['data']['posts'],
+            'isAdmin' => $result['data']['isAdmin'],
             'currentPostId' => CurrentPostTravail::id(),
         ]);
     }
 
     public function store(Request $request)
     {
-        $user = Auth::user();
-
-        $allowedIds = $user->hasRole('admin')
-            ? PostTravail::query()->pluck('id')->all()
-            : $user->postTravails()->pluck('post_travails.id')->all();
-
-        $validated = $request->validate([
-            'post_travail_id' => ['required', 'integer', Rule::in($allowedIds)],
-        ]);
-
-        $postId = (int) $validated['post_travail_id'];
+        $result = $this->service->select($request);
+        $postId = $result['data']['post_id'];
         CurrentPostTravail::set($postId);
-
-        if ($user->postTravails()->where('post_travails.id', $postId)->exists()) {
-            foreach ($user->postTravails as $post) {
-                $user->postTravails()->updateExistingPivot($post->id, [
-                    'is_default' => $post->id === $postId,
-                ]);
-            }
-        }
-
-        return redirect()->route('dashboard');
+        return redirect()->route('dashboard')->with('success', $result['message']);
     }
 
     public function globalDashboard()
     {
-        abort_unless(Auth::user()?->hasRole('admin'), 403);
+        $this->service->authorizeGlobalDashboard();
 
         CurrentPostTravail::setGlobal();
 
@@ -66,8 +45,8 @@ class PostSelectionController extends Controller
 
     public function openPost(int $id)
     {
-        $post = PostTravail::query()->findOrFail($id);
-        CurrentPostTravail::set($post->id);
+        $result = $this->service->openPost($id);
+        CurrentPostTravail::set($result['data']['post_id']);
 
         return redirect()->route('dashboard');
     }

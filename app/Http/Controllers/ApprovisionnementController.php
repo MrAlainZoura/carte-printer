@@ -3,179 +3,68 @@
 namespace App\Http\Controllers;
 
 use App\Models\Approvisionnement;
-use App\Models\PostProduit;
-use App\Models\PostTravail;
-use App\Models\Produit;
-use App\Support\CurrentPostTravail;
-use Illuminate\Support\Facades\DB;
+use App\Services\ApprovisionnementService;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class ApprovisionnementController extends Controller
 {
+    public function __construct(private readonly ApprovisionnementService $service)
+    {
+    }
+
     public function index()
     {
-        $query = $this->scopedQuery()->with(['user', 'postTravail', 'produit', 'receptionnaire']);
+        $result = $this->service->index();
 
-        return view('approvisionnements.index', [
-            'approvisionnements' => $query->latest()->paginate(15),
-        ]);
+        return view('approvisionnements.index', $result['data']);
     }
 
     public function create()
     {
-        return view('approvisionnements.form', [
-            'record' => new Approvisionnement([
-                'posttravail_id' => CurrentPostTravail::id(),
-                'origine' => 'central',
-            ]),
-            'posts' => $this->availablePosts(),
-            'produits' => Produit::query()->orderBy('libele')->get(),
-        ]);
+        $result = $this->service->formData();
+
+        return view('approvisionnements.form', $result['data']);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate($this->rules());
-        $this->assertPostAllowed((int) $validated['posttravail_id']);
+        $result = $this->service->store($request);
 
-        Approvisionnement::create([
-            ...$validated,
-            'user_id' => $request->user()->id,
-            'confirm' => false,
-            'receptionUser' => null,
-            'origine' => $validated['origine'] ?? 'central',
-        ]);
-
-        return to_route('approvisionnements.index')->with('success', 'Approvisionnement enregistré.');
+        return to_route('approvisionnements.index')->with('success', $result['message']);
     }
 
     public function show(int $id)
     {
-        $approvisionnement = $this->scopedQuery()
-            ->with(['user', 'postTravail', 'produit', 'receptionnaire'])
-            ->findOrFail($id);
+        $result = $this->service->show($id);
 
-        return view('approvisionnements.show', compact('approvisionnement'));
+        return view('approvisionnements.show', $result['data']);
     }
 
     public function edit(int $id)
     {
-        $record = $this->scopedQuery()->findOrFail($id);
-        abort_if($record->confirm, 403, 'Un approvisionnement confirmé ne peut plus être modifié.');
+        $result = $this->service->formData($id);
 
-        return view('approvisionnements.form', [
-            'record' => $record,
-            'posts' => $this->availablePosts(),
-            'produits' => Produit::query()->orderBy('libele')->get(),
-        ]);
+        return view('approvisionnements.form', $result['data']);
     }
 
     public function update(Request $request, int $id)
     {
-        $record = $this->scopedQuery()->findOrFail($id);
-        abort_if($record->confirm, 403, 'Un approvisionnement confirmé ne peut plus être modifié.');
+        $result = $this->service->update($request, $id);
 
-        $validated = $request->validate($this->rules());
-        $this->assertPostAllowed((int) $validated['posttravail_id']);
-        $record->update([
-            ...$validated,
-            'origine' => $validated['origine'] ?? 'central',
-        ]);
-
-        return to_route('approvisionnements.show', $record)->with('success', 'Approvisionnement modifié.');
+        return to_route('approvisionnements.show', $result['data'])->with('success', $result['message']);
     }
 
     public function destroy(int $id)
     {
-        $record = $this->scopedQuery()->findOrFail($id);
-        abort_if($record->confirm, 403, 'Un approvisionnement confirmé ne peut plus être supprimé.');
-        $record->delete();
+        $result = $this->service->delete($id);
 
-        return to_route('approvisionnements.index')->with('success', 'Approvisionnement supprimé.');
+        return to_route('approvisionnements.index')->with('success', $result['message']);
     }
 
     public function confirm(int $id, Request $request)
     {
-        DB::transaction(function () use ($id, $request) {
-            $record = $this->scopedQuery()->lockForUpdate()->findOrFail($id);
-            abort_if($record->confirm, 422, 'Cet approvisionnement est déjà confirmé.');
+        $result = $this->service->confirm($id, $request);
 
-            $stock = PostProduit::query()
-                ->where('post_travail_id', $record->posttravail_id)
-                ->where('produit_id', $record->produit_id)
-                ->lockForUpdate()
-                ->first();
-
-            if (! $stock) {
-                $stock = PostProduit::create([
-                    'post_travail_id' => $record->posttravail_id,
-                    'produit_id' => $record->produit_id,
-                    'quantite' => 0,
-                ]);
-            }
-
-            $stock->increment('quantite', $record->quantite);
-
-            $record->update([
-                'confirm' => true,
-                'receptionUser' => $request->user()->id,
-            ]);
-        });
-
-        return to_route('approvisionnements.show', $id)->with('success', 'Réception confirmée.');
-    }
-
-    private function scopedQuery()
-    {
-        $query = Approvisionnement::query();
-        $postId = CurrentPostTravail::id();
-
-        if ($postId !== null) {
-            return $query->where('posttravail_id', $postId);
-        }
-
-        abort_unless(auth()->user()?->hasRole('admin') && CurrentPostTravail::isGlobal(), 403);
-
-        return $query;
-    }
-
-    private function availablePosts()
-    {
-        if ($postId = CurrentPostTravail::id()) {
-            return PostTravail::query()->whereKey($postId)->get();
-        }
-
-        abort_unless(auth()->user()?->hasRole('admin') && CurrentPostTravail::isGlobal(), 403);
-
-        return PostTravail::query()->orderBy('libele')->get();
-    }
-
-    private function assertPostAllowed(int $postId): void
-    {
-        $selectedPostId = CurrentPostTravail::id();
-
-        if ($selectedPostId !== null) {
-            abort_unless($postId === $selectedPostId, 403);
-
-            return;
-        }
-
-        abort_unless(
-            auth()->user()?->hasRole('admin')
-                && CurrentPostTravail::isGlobal()
-                && PostTravail::query()->whereKey($postId)->exists(),
-            403
-        );
-    }
-
-    private function rules(): array
-    {
-        return [
-            'posttravail_id' => ['required', 'integer', Rule::exists('post_travails', 'id')],
-            'produit_id' => ['required', 'integer', Rule::exists('produits', 'id')],
-            'quantite' => ['required', 'numeric', 'gt:0'],
-            'origine' => ['nullable', 'string', 'max:255'],
-        ];
+        return to_route('approvisionnements.show', $id)->with('success', $result['message']);
     }
 }

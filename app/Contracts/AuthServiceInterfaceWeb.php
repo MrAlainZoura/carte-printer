@@ -6,9 +6,9 @@ use Illuminate\Http\Request;
 
 interface AuthServiceInterfaceWeb
 {
-    static public function login(Request $credentials);
-    static public function logout();
-    static public function me();
-    static public function register(Request $request);
-    static public function all();
+    public static function login(Request $credentials): array;
+    public static function logout(): array;
+    public static function me(): array;
+    public static function register(Request $request): array;
+    public static function all(): array;
 }
