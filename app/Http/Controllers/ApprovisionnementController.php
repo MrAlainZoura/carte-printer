@@ -101,19 +101,26 @@ class ApprovisionnementController extends Controller
             $record = $this->scopedQuery()->lockForUpdate()->findOrFail($id);
             abort_if($record->confirm, 422, 'Cet approvisionnement est déjà confirmé.');
 
+            $stock = PostProduit::query()
+                ->where('post_travail_id', $record->posttravail_id)
+                ->where('produit_id', $record->produit_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $stock) {
+                $stock = PostProduit::create([
+                    'post_travail_id' => $record->posttravail_id,
+                    'produit_id' => $record->produit_id,
+                    'quantite' => 0,
+                ]);
+            }
+
+            $stock->increment('quantite', $record->quantite);
+
             $record->update([
                 'confirm' => true,
                 'receptionUser' => $request->user()->id,
             ]);
-
-            $stock = PostProduit::query()->firstOrCreate(
-                [
-                    'post_travail_id' => $record->posttravail_id,
-                    'produit_id' => $record->produit_id,
-                ],
-                ['quantite' => 0]
-            );
-            $stock->increment('quantite', $record->quantite);
         });
 
         return to_route('approvisionnements.show', $id)->with('success', 'Réception confirmée.');
