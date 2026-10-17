@@ -3,96 +3,54 @@
 namespace App\Http\Controllers;
 
 use App\Models\Plaque;
-use App\Models\Vehicule;
-use App\Support\CurrentPostTravail;
+use App\Services\PlaqueService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class PlaqueController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    public function __construct(private readonly PlaqueService $service)
+    {
+    }
+
     public function index()
     {
         //
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         //
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Plaque $plaque)
     {
-        return redirect()->route('vehicules.show', $plaque->vehicule_id);
+        $result = $this->service->show($plaque);
+
+        return redirect()->route('vehicules.show', $result['data']['vehicule_id']);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(int $vehiculeId, int $plaqueId)
     {
-        $vehicule = $this->findVehicule($vehiculeId);
-        $plaque = $vehicule->plaque()->whereKey($plaqueId)->firstOrFail();
+        $result = $this->service->edit($vehiculeId, $plaqueId);
 
-        return view('plaques.form', compact('vehicule', 'plaque'));
+        return view('plaques.form', $result['data']);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, int $vehiculeId, int $plaqueId)
     {
-        $vehicule = $this->findVehicule($vehiculeId);
-        $plaque = $vehicule->plaque()->whereKey($plaqueId)->firstOrFail();
+        $result = $this->service->update($request, $vehiculeId, $plaqueId);
 
-        $validated = $request->validate([
-            'ville' => ['nullable', 'string', 'max:255'],
-            'serie' => ['nullable', 'string', 'max:255'],
-            'statut' => ['required', Rule::in(['disponible', 'attribuee', 'annulee'])],
-            'date_attribution' => ['nullable', 'date'],
-        ]);
-
-        DB::transaction(function () use ($plaque, $validated) {
-            $plaque->update($validated);
-        });
-
-        return to_route('vehicules.show', $vehicule)
-            ->with('success', 'Plaque mise à jour. Les autres dossiers n’ont pas été modifiés.');
+        return to_route('vehicules.show', $result['data']['vehicule'])
+            ->with('success', $result['message']);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Plaque $plaque)
     {
         //
-    }
-
-    private function findVehicule(int $id): Vehicule
-    {
-        $query = Vehicule::query();
-
-        if ($postId = CurrentPostTravail::id()) {
-            $query->where('post_travail_id', $postId);
-        }
-
-        return $query->with('plaque')->findOrFail($id);
     }
 }

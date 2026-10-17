@@ -3,20 +3,64 @@
 namespace App\Services;
 
 use App\Contracts\CarteServiceInterface;
+use App\Models\CarteRose;
+use App\Models\Vehicule;
+use App\Support\CurrentPostTravail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class CarteService implements CarteServiceInterface
 {
-    public static function print(int $id)
+    public function edit(int $vehiculeId, int $carteRoseId): array
+    {
+        $query = Vehicule::query();
+        if ($postId = CurrentPostTravail::id()) {
+            $query->where('post_travail_id', $postId);
+        }
+        $vehicule = $query->findOrFail($vehiculeId);
+        $carteRose = $vehicule->carteRoses()->findOrFail($carteRoseId);
+
+        return [
+            'message' => 'Carte rose chargée.',
+            'data' => compact('vehicule', 'carteRose'),
+        ];
+    }
+
+    public function update(Request $request, int $vehiculeId, int $carteRoseId): array
+    {
+        $query = Vehicule::query();
+        if ($postId = CurrentPostTravail::id()) {
+            $query->where('post_travail_id', $postId);
+        }
+        $vehicule = $query->findOrFail($vehiculeId);
+        $carteRose = $vehicule->carteRoses()->findOrFail($carteRoseId);
+        $validated = $request->validate([
+            'libele' => ['required', 'string', 'max:255'],
+            'numero' => ['required', 'string', 'max:255', Rule::unique('carte_roses', 'numero')->ignore($carteRose->id)],
+            'date_octroi' => ['nullable', 'date'],
+            'date_expiration' => ['nullable', 'date', 'after_or_equal:date_octroi'],
+            'statut' => ['required', Rule::in(['active', 'expiree', 'annulee', 'perdue'])],
+            'observations' => ['nullable', 'string'],
+        ]);
+        $carteRose->update($validated);
+
+        return [
+            'message' => 'Carte rose mise à jour. Les autres dossiers n’ont pas été modifiés.',
+            'data' => ['vehicule' => $vehicule, 'carteRose' => $carteRose],
+        ];
+    }
+
+    public static function print(int $id): array
     {
         $vehicule = VehiculesService::show($id)['data'];
 
         if (! $vehicule) {
             return [
-                'status' => false,
-                'error' => 'Nous avons du mal à trouver ce véhicule',
+                'message' => 'Nous avons du mal à trouver ce véhicule.',
+                'data' => null,
             ];
         }
 
@@ -37,7 +81,7 @@ class CarteService implements CarteServiceInterface
         ];
 
         $createAt = Carbon::parse($vehicule->created_at);
-        $ordre = count(VehiculesService::all()[1]);
+        $ordre = VehiculesService::all()['data']->total();
 
         $vehicule->DGRK = 'DGRK/'.str_pad($ordre, 4, '0', STR_PAD_LEFT)
             .$createAt->format('d/m/Y');
@@ -55,14 +99,10 @@ class CarteService implements CarteServiceInterface
             'defaultFont' => 'DejaVu Sans',
         ]);
 
-        return response(
-            $pdf->output(),
-            200,
-            [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="carte.pdf"',
-            ]
-        );
+        return [
+            'message' => 'Carte rose générée.',
+            'data' => $pdf->output(),
+        ];
     }
 
     public static function genereQR(array $contenu)

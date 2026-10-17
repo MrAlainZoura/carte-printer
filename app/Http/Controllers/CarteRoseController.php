@@ -3,11 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\CarteRose;
-use App\Models\Vehicule;
 use App\Services\CarteService;
-use App\Support\CurrentPostTravail;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class CarteRoseController extends Controller
 {
@@ -55,8 +52,9 @@ class CarteRoseController extends Controller
      */
     public function edit(int $vehiculeId, int $carteRoseId)
     {
-        $vehicule = $this->findVehicule($vehiculeId);
-        $carteRose = $vehicule->carteRoses()->findOrFail($carteRoseId);
+        $result = $this->service->edit($vehiculeId, $carteRoseId);
+        $vehicule = $result['data']['vehicule'];
+        $carteRose = $result['data']['carteRose'];
 
         return view('carte-roses.form', compact('vehicule', 'carteRose'));
     }
@@ -66,22 +64,10 @@ class CarteRoseController extends Controller
      */
     public function update(Request $request, int $vehiculeId, int $carteRoseId)
     {
-        $vehicule = $this->findVehicule($vehiculeId);
-        $carteRose = $vehicule->carteRoses()->findOrFail($carteRoseId);
+        $result = $this->service->update($request, $vehiculeId, $carteRoseId);
 
-        $validated = $request->validate([
-            'libele' => ['required', 'string', 'max:255'],
-            'numero' => ['required', 'string', 'max:255', Rule::unique('carte_roses', 'numero')->ignore($carteRose->id)],
-            'date_octroi' => ['nullable', 'date'],
-            'date_expiration' => ['nullable', 'date', 'after_or_equal:date_octroi'],
-            'statut' => ['required', Rule::in(['active', 'expiree', 'annulee', 'perdue'])],
-            'observations' => ['nullable', 'string'],
-        ]);
-
-        $carteRose->update($validated);
-
-        return to_route('vehicules.show', $vehicule)
-            ->with('success', 'Carte rose mise à jour. Les autres dossiers n’ont pas été modifiés.');
+        return to_route('vehicules.show', $result['data']['vehicule'])
+            ->with('success', $result['message']);
     }
 
     /**
@@ -96,21 +82,14 @@ class CarteRoseController extends Controller
     {
         $result = $this->service::print($id);
 
-        if (is_array($result)) {
-            return back()->with('error', $result['error']);
+        if ($result['data'] === null) {
+            return back()->with('error', $result['message']);
         }
 
-        return $result;
+        return response($result['data'], 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="carte.pdf"',
+        ]);
     }
 
-    private function findVehicule(int $id): Vehicule
-    {
-        $query = Vehicule::query();
-
-        if ($postId = CurrentPostTravail::id()) {
-            $query->where('post_travail_id', $postId);
-        }
-
-        return $query->findOrFail($id);
-    }
 }

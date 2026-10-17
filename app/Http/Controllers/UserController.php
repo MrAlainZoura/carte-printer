@@ -2,49 +2,58 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CarteRose;
-use App\Models\PostTravail;
-use App\Models\User;
 use App\Services\AuthServiceWeb;
-use Illuminate\Database\Eloquent\Builder;
+use App\Services\UserManagementService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Str;
-use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    protected AuthServiceWeb $service;
+    protected AuthServiceWeb $authService;
+    protected UserManagementService $service;
 
-    public function __construct(AuthServiceWeb $service)
+    public function __construct(AuthServiceWeb $authService, UserManagementService $service)
     {
+        $this->authService = $authService;
         $this->service = $service;
     }
 
     public function register(Request $request)
     {
-        return $this->service->register($request);
+        $result = $this->authService->register($request);
+
+        if (! $result['data']) {
+            return to_route('login')->with('error', $result['message']);
+        }
+
+        return back()->with('success', $result['message']);
     }
 
     public function login(Request $request)
     {
-        return $this->service->login($request);
+        $result = $this->authService->login($request);
+
+        if (! $result['data']) {
+            return back()->withInput($request->only('identifiant'))->with('echec', $result['message']);
+        }
+
+        return to_route('postes.select')->with('success', $result['message']);
     }
 
     public function logout()
     {
-        return $this->service->logout();
+        $result = $this->authService->logout();
+
+        return redirect('/')->with('success', $result['message']);
     }
 
     public function me()
     {
-        return $this->service->me();
+        return $this->authService->me()['data'];
     }
 
     public function all()
     {
-        return $this->service->all();
+        return $this->authService->all()['data'];
     }
 
     public function dashboard()
@@ -54,100 +63,51 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $query = $this->visibleUsersQuery()->with(['roles', 'postTravails']);
-        if ($search = $request->string('search')->trim()->toString()) {
-            $query->where(fn ($builder) => $builder
-                ->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%")
-                ->orWhere('tel', 'like', "%{$search}%"));
-        }
+        $result = $this->service->index($request);
 
-        return view('users.index', ['users' => $query->latest()->paginate(15)->withQueryString()]);
+        return view('users.index', $result['data']);
     }
 
     public function create()
     {
-        return $this->form(new User(), 'Créer un utilisateur');
+        $result = $this->service->formData(title: 'Créer un utilisateur');
+
+        return view('users.form', $result['data']);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate($this->rules());
+        $result = $this->service->store($request);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'] ?? null,
-            'tel' => $validated['tel'] ?? null,
-            'password' => Hash::make($validated['password']),
-        ]);
-
-        $user->assignRole($validated['role']);
-        $user->postTravails()->attach($validated['post_travail_id'], ['is_default' => true]);
-
-        return to_route('users.index')->with('success', 'Utilisateur créé avec succès.');
+        return to_route('users.index')->with('success', $result['message']);
     }
 
     public function show(int $id)
     {
-        $record = $this->visibleUsersQuery()->with(['postTravails', 'roles'])->findOrFail($id);
-        $cards = CarteRose::query()->where('user_id', $record->id);
+        $result = $this->service->show($id);
 
-        return view('users.show', [
-            'record' => $record,
-            'stats' => [
-                'Cartes créées' => (clone $cards)->count(),
-                'Cartes actives' => (clone $cards)->where('statut', 'active')->count(),
-                'Véhicules concernés' => (clone $cards)->distinct('vehicule_id')->count('vehicule_id'),
-            ],
-        ]);
+        return view('users.show', $result['data']);
     }
 
     public function profile()
     {
-        $record = auth()->user()->load(['postTravails', 'roles']);
-        $cards = CarteRose::query()->where('user_id', $record->id);
+        $result = $this->service->profile(auth()->user());
 
-        return view('users.profile', [
-            'record' => $record,
-            'stats' => [
-                'Cartes créées' => (clone $cards)->count(),
-                'Cartes actives' => (clone $cards)->where('statut', 'active')->count(),
-                'Véhicules concernés' => (clone $cards)->distinct('vehicule_id')->count('vehicule_id'),
-            ],
-        ]);
+        return view('users.profile', $result['data']);
     }
 
     public function edit(int $id)
     {
-        return $this->form($this->visibleUsersQuery()->with(['postTravails', 'roles'])->findOrFail($id), 'Modifier l’utilisateur');
+        $result = $this->service->formData($id, 'Modifier l’utilisateur');
+
+        return view('users.form', $result['data']);
     }
 
     public function update(Request $request, int $id)
     {
-        $record = $this->visibleUsersQuery()->findOrFail($id);
-        $isAdmin = auth()->user()?->hasRole('admin') ?? false;
-        $validated = $request->validate($this->rules($record, $isAdmin));
+        $result = $this->service->update($request, $id);
 
-        $payload = [
-            'name' => $validated['name'],
-            'email' => $validated['email'] ?? null,
-            'tel' => $validated['tel'] ?? null,
-        ];
-
-        if (! blank($validated['password'] ?? null)) {
-            $payload['password'] = Hash::make($validated['password']);
-        }
-
-        $record->update($payload);
-
-        if ($isAdmin) {
-            $record->syncRoles([$validated['role']]);
-            $record->postTravails()->sync([
-                $validated['post_travail_id'] => ['is_default' => true],
-            ]);
-        }
-
-        return to_route('users.index')->with('success', 'Utilisateur modifié avec succès.');
+        return to_route('users.index')->with('success', $result['message']);
     }
 
     public function editPassword()
@@ -157,96 +117,24 @@ class UserController extends Controller
 
     public function updatePassword(Request $request)
     {
-        $validated = $request->validate([
-            'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
+        $result = $this->service->updatePassword($request);
 
-        $request->user()->update([
-            'password' => Hash::make($validated['password']),
-        ]);
-
-        return to_route('users.profile')->with('success', 'Votre mot de passe a été modifié.');
+        return to_route('users.profile')->with('success', $result['message']);
     }
 
     public function resetPassword(int $id)
     {
-        abort_unless(auth()->user()?->hasRole('admin'), 403);
-
-        $temporaryPassword = Str::password(16);
-        $this->visibleUsersQuery()->findOrFail($id)->update([
-            'password' => Hash::make($temporaryPassword),
-        ]);
+        $result = $this->service->resetPassword($id);
 
         return to_route('users.show', $id)
-            ->with('success', 'Mot de passe réinitialisé. Communiquez ce mot de passe temporaire à l’utilisateur.')
-            ->with('temporary_password', $temporaryPassword);
+            ->with('success', $result['message'])
+            ->with('temporary_password', $result['data']['temporary_password']);
     }
 
     public function destroy(int $id)
     {
-        $this->visibleUsersQuery()->findOrFail($id)->delete();
+        $result = $this->service->delete($id);
 
-        return to_route('users.index')->with('success', 'Utilisateur supprimé avec succès.');
-    }
-
-    private function rules(?User $record = null, bool $manageAccess = true): array
-    {
-        $emailRule = Rule::unique('users', 'email');
-        $telRule = Rule::unique('users', 'tel');
-
-        if ($record) {
-            $emailRule->ignore($record->id);
-            $telRule->ignore($record->id);
-        }
-
-        $assignableRoles = Role::query()
-            ->where('name', '!=', 'admin')
-            ->pluck('name')
-            ->all();
-
-        if ($record?->hasRole('admin') || auth()->user()?->hasRole('admin')) {
-            $assignableRoles[] = 'admin';
-        }
-
-        $rules = [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255', $emailRule],
-            'tel' => ['nullable', 'string', 'max:255', $telRule],
-        ];
-
-        if (! $record || $manageAccess) {
-            $rules['password'] = [$record ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'];
-        }
-
-        if (! $record || $manageAccess) {
-            $rules['post_travail_id'] = ['required', 'integer', 'exists:post_travails,id'];
-            $rules['role'] = ['required', 'string', Rule::in($assignableRoles)];
-        }
-
-        return $rules;
-    }
-
-    private function form(User $record, string $title)
-    {
-        $roles = User::assignableRoleLabels();
-        if ($record->hasRole('admin') || auth()->user()?->hasRole('admin')) {
-            $roles = ['admin' => 'Administrateur'] + $roles;
-        }
-
-        return view('users.form', [
-            'title' => $title,
-            'record' => $record,
-            'posts' => PostTravail::query()->where('actif', true)->orderBy('libele')->get(),
-            'roles' => $roles,
-        ]);
-    }
-
-    private function visibleUsersQuery(): Builder
-    {
-        return User::query()->where(function ($query) {
-            $query->where('id', '!=', 1)
-                ->orWhere('id', auth()->id());
-        });
+        return to_route('users.index')->with('success', $result['message']);
     }
 }

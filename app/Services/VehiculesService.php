@@ -22,7 +22,7 @@ class VehiculesService implements VehiculeServiceInterface
 {
     private const NON_RENSEIGNE = 'Non renseigne';
 
-    public function store(Request $request)
+    public function store(Request $request): array
     {
         $request->merge([
             'creer_proprietaire' => $request->boolean('creer_proprietaire') ? '1' : '0',
@@ -294,11 +294,14 @@ class VehiculesService implements VehiculeServiceInterface
         return $postValue !== '' ? $postValue : null;
     }
 
-    public function create()
+    public function create(): array
     {
         $proprietaires = ProprietaireService::index()['data'];
 
-        return view('vehicules.create', compact('proprietaires'));
+        return [
+            'message' => 'Données du formulaire de création chargées.',
+            'data' => ['proprietaires' => $proprietaires],
+        ];
     }
 
     public static function show(int $id): array
@@ -328,20 +331,14 @@ class VehiculesService implements VehiculeServiceInterface
         }
 
         return [
-            (clone $base)->paginate(10),
-            (clone $base)->get(),
+            'message' => 'Liste des véhicules chargée.',
+            'data' => (clone $base)->paginate(10),
         ];
     }
 
-    public function delete(int $id)
+    public function delete(int $id): array
     {
-        $vehicule = Vehicule::find($id);
-        if (! $vehicule) {
-            return [
-                'message' => 'Véhicule non trouvé',
-                'data' => null,
-            ];
-        }
+        $vehicule = Vehicule::findOrFail($id);
         $vehicule->delete();
 
         return [
@@ -350,22 +347,19 @@ class VehiculesService implements VehiculeServiceInterface
         ];
     }
 
-    public function edit(int $id)
+    public function edit(int $id): array
     {
-        $vehicule = Vehicule::with(['proprietaire', 'plaque', 'carteRoses'])->find($id);
-        if (! $vehicule) {
-            return back()->with('echec', 'Véhicule non trouvé');
-        }
+        $vehicule = Vehicule::with(['proprietaire', 'plaque', 'carteRoses'])->findOrFail($id);
 
-        return view('vehicules.edit', compact('vehicule'));
+        return [
+            'message' => 'Données du véhicule chargées.',
+            'data' => $vehicule,
+        ];
     }
 
-    public function update(int $id, Request $request)
+    public function update(int $id, Request $request): array
     {
-        $vehicule = Vehicule::with(['plaque', 'carteRoses'])->find($id);
-        if (! $vehicule) {
-            return back()->with('echec', 'Véhicule non trouvé');
-        }
+        $vehicule = Vehicule::with(['plaque', 'carteRoses'])->findOrFail($id);
 
         $validated = $request->validate([
             'marque' => 'required|string|max:255',
@@ -385,19 +379,24 @@ class VehiculesService implements VehiculeServiceInterface
             $vehicule->update($validated);
         });
 
-        return to_route('vehicules.show', $vehicule->id)
-            ->with('success', 'Véhicule mis à jour avec succès.');
+        return [
+            'message' => 'Véhicule mis à jour avec succès.',
+            'data' => $vehicule->fresh(['proprietaire', 'plaque', 'carteRoses', 'postTravail']),
+        ];
     }
 
-    public function transferOwnerForm(int $id)
+    public function transferOwnerForm(int $id): array
     {
         $vehicule = Vehicule::with('proprietaire')->findOrFail($id);
         $proprietaires = Propietaire::query()->orderBy('nom_complet')->orderBy('raison_sociale')->get();
 
-        return view('vehicules.transfer-owner', compact('vehicule', 'proprietaires'));
+        return [
+            'message' => 'Données du formulaire de transfert chargées.',
+            'data' => compact('vehicule', 'proprietaires'),
+        ];
     }
 
-    public function transferOwner(int $id, Request $request)
+    public function transferOwner(int $id, Request $request): array
     {
         $validated = $request->validate([
             'propietaire_id' => [
@@ -407,7 +406,7 @@ class VehiculesService implements VehiculeServiceInterface
             ],
         ]);
 
-        DB::transaction(function () use ($id, $validated) {
+        $vehicule = DB::transaction(function () use ($id, $validated) {
             $vehicule = Vehicule::query()->lockForUpdate()->findOrFail($id);
             $nouveauProprietaire = Propietaire::query()->findOrFail($validated['propietaire_id']);
 
@@ -433,12 +432,17 @@ class VehiculesService implements VehiculeServiceInterface
             ]);
 
             $vehicule->update(['propietaire_id' => $nouveauProprietaire->id]);
+
+            return $vehicule->fresh(['proprietaire', 'plaque', 'carteRoses', 'postTravail']);
         });
 
-        return to_route('vehicules.show', $id)->with('success', 'Propriétaire du véhicule modifié. Le transfert a été ajouté à l’historique.');
+        return [
+            'message' => 'Propriétaire du véhicule modifié. Le transfert a été ajouté à l’historique.',
+            'data' => $vehicule,
+        ];
     }
 
-    public function ownerHistory(int $id)
+    public function ownerHistory(int $id): array
     {
         $vehicule = Vehicule::query()->findOrFail($id);
         $historique = $vehicule->historiqueProprietaires()
@@ -446,17 +450,23 @@ class VehiculesService implements VehiculeServiceInterface
             ->latest('transfere_le')
             ->paginate(15);
 
-        return view('vehicules.owner-history', compact('vehicule', 'historique'));
+        return [
+            'message' => 'Historique des propriétaires chargé.',
+            'data' => compact('vehicule', 'historique'),
+        ];
     }
 
-    public function changePlaqueForm(int $id)
+    public function changePlaqueForm(int $id): array
     {
         $vehicule = Vehicule::with('plaque')->findOrFail($id);
 
-        return view('vehicules.change-plaque', compact('vehicule'));
+        return [
+            'message' => 'Données du formulaire de changement de plaque chargées.',
+            'data' => compact('vehicule'),
+        ];
     }
 
-    public function changePlaque(int $id, Request $request)
+    public function changePlaque(int $id, Request $request): array
     {
         $request->merge(['code' => trim((string) $request->input('code'))]);
         $validated = $request->validate([
@@ -467,7 +477,7 @@ class VehiculesService implements VehiculeServiceInterface
             'code.unique' => 'Cette plaque est déjà attribuée à un véhicule.',
         ]);
 
-        DB::transaction(function () use ($id, $validated) {
+        $vehicule = DB::transaction(function () use ($id, $validated) {
             $vehicule = Vehicule::query()->lockForUpdate()->with('plaque')->findOrFail($id);
             $anciennePlaque = $vehicule->plaque;
             $post = PostTravail::query()->findOrFail($vehicule->post_travail_id);
@@ -496,8 +506,13 @@ class VehiculesService implements VehiculeServiceInterface
             $nouvellePlaque->update(['vehicule_id' => $vehicule->id]);
             $anciennePlaque?->update(['statut' => 'annulee']);
             $stock->decrement('quantite');
+
+            return $vehicule->fresh(['proprietaire', 'plaque', 'carteRoses', 'postTravail']);
         });
 
-        return to_route('vehicules.show', $id)->with('success', 'La plaque du véhicule a été remplacée.');
+        return [
+            'message' => 'La plaque du véhicule a été remplacée.',
+            'data' => $vehicule,
+        ];
     }
 }

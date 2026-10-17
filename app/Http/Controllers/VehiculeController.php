@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Vehicule;
 use App\Services\VehiculesService;
 use Illuminate\Http\Request;
 
@@ -17,29 +16,34 @@ class VehiculeController extends Controller
 
     public function index()
     {
-        $vehicules = $this->service::all()[0];
+        $result = $this->service::all();
+        $vehicules = $result['data'];
 
         return view('vehicules.index', compact('vehicules'));
     }
 
     public function create()
     {
-        return $this->service->create();
+        $result = $this->service->create();
+
+        return view('vehicules.create', $result['data']);
     }
 
     public function store(Request $request)
     {
-        $vehicule = $this->service->store($request)['data'];
+        $result = $this->service->store($request);
+        $vehicule = $result['data'];
 
         return to_route('vehicules.show', $vehicule->id)
-            ->with('success', 'Véhicule, plaque et carte rose enregistrés avec succès.');
+            ->with('success', $result['message']);
     }
 
     public function show(int $id)
     {
-        $vehicule = $this->service->show($id)['data'];
+        $result = $this->service->show($id);
+        $vehicule = $result['data'];
         if (! $vehicule) {
-            return back()->with('echec', 'Impossible de trouvé ce véhicule');
+            abort(404, $result['message']);
         }
 
         return view('vehicules.show', compact('vehicule'));
@@ -47,44 +51,57 @@ class VehiculeController extends Controller
 
     public function edit(int $id)
     {
-        return $this->service->edit($id);
+        $result = $this->service->edit($id);
+
+        return view('vehicules.edit', ['vehicule' => $result['data']]);
     }
 
     public function update(Request $request, int $id)
     {
-        return $this->service->update($id, $request);
+        $result = $this->service->update($id, $request);
+
+        return to_route('vehicules.show', $id)->with('success', $result['message']);
     }
 
     public function transferOwnerForm(int $id)
     {
-        return $this->service->transferOwnerForm($id);
+        $result = $this->service->transferOwnerForm($id);
+
+        return view('vehicules.transfer-owner', $result['data']);
     }
 
     public function transferOwner(Request $request, int $id)
     {
-        return $this->service->transferOwner($id, $request);
+        $result = $this->service->transferOwner($id, $request);
+
+        return to_route('vehicules.show', $id)->with('success', $result['message']);
     }
 
     public function ownerHistory(int $id)
     {
-        return $this->service->ownerHistory($id);
+        $result = $this->service->ownerHistory($id);
+
+        return view('vehicules.owner-history', $result['data']);
     }
 
     public function changePlaqueForm(int $id)
     {
-        return $this->service->changePlaqueForm($id);
+        $result = $this->service->changePlaqueForm($id);
+
+        return view('vehicules.change-plaque', $result['data']);
     }
 
     public function changePlaque(Request $request, int $id)
     {
-        return $this->service->changePlaque($id, $request);
+        $result = $this->service->changePlaque($id, $request);
+
+        return to_route('vehicules.show', $id)->with('success', $result['message']);
     }
 
     public function destroy(int $id)
     {
-        $vehicule = Vehicule::findOrFail($id);
-        $this->service->delete($vehicule->id);
+        $result = $this->service->delete($id);
 
-        return to_route('vehicules.index')->with('success', 'Véhicule supprimé avec succès.');
+        return to_route('vehicules.index')->with('success', $result['message']);
     }
 }

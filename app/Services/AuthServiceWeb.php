@@ -27,10 +27,13 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
             ->exists();
     }
 
-    public static function register(Request $request)
+    public static function register(Request $request): array
     {
         if (self::hasSecondaryAdmin()) {
-            return redirect()->route('login');
+            return [
+                'message' => 'Les inscriptions sont fermées.',
+                'data' => null,
+            ];
         }
 
         $assignableRoles = Role::query()
@@ -67,13 +70,19 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
         $user->assignRole($request->role);
         $user->postTravails()->attach($post->id, ['is_default' => true]);
 
-        return back()->with('success', 'Utilisateur créé. Connectez-vous avec votre email ou votre numéro de téléphone.');
+        return [
+            'message' => 'Utilisateur créé. Connectez-vous avec votre email ou votre numéro de téléphone.',
+            'data' => $user,
+        ];
     }
 
-    public static function login(Request $request)
+    public static function login(Request $request): array
     {
         if (Auth::check()) {
-            return redirect()->route('postes.select');
+            return [
+                'message' => 'Vous êtes déjà connecté.',
+                'data' => Auth::user(),
+            ];
         }
 
         $validation = Validator::make($request->all(), [
@@ -82,9 +91,7 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
             'remember' => ['sometimes', 'boolean'],
         ]);
 
-        if ($validation->fails()) {
-            return back()->with('echec', $validation->errors());
-        }
+        $validation->validate();
 
         $identifier = trim((string) $request->identifiant);
         $password = $request->password;
@@ -109,7 +116,10 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
                 });
 
             if ($matchingUsers->count() > 1) {
-                return back()->with('echec', 'Ce numéro est lié à plusieurs comptes. Connectez-vous avec votre email.');
+                return [
+                    'message' => 'Ce numéro est lié à plusieurs comptes. Connectez-vous avec votre email.',
+                    'data' => null,
+                ];
             }
             if ($matchingUsers->count() === 1) {
                 return self::completeLogin($request, $matchingUsers->first(), $remember);
@@ -122,22 +132,31 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
         });
 
         if ($matchingUsers->count() > 1) {
-            return back()->with('echec', "Ce nom d’utilisateur et mot de passe sont utilisés par plusieurs comptes. Veuillez vous connecter avec votre adresse email.");
+            return [
+                'message' => "Ce nom d’utilisateur et mot de passe sont utilisés par plusieurs comptes. Veuillez vous connecter avec votre adresse email.",
+                'data' => null,
+            ];
         }
         if ($matchingUsers->count() === 1) {
             return self::completeLogin($request, $matchingUsers->first(), $remember);
         }
 
-        return back()->with('echec', "email / téléphone / nom d'utilisateur ou mot de passe incorrect");
+        return [
+            'message' => "email / téléphone / nom d'utilisateur ou mot de passe incorrect",
+            'data' => null,
+        ];
     }
 
-    protected static function completeLogin(Request $request, User $user, bool $remember = false)
+    protected static function completeLogin(Request $request, User $user, bool $remember = false): array
     {
         Auth::login($user, $remember);
         $request->session()->regenerate();
         CurrentPostTravail::clear();
 
-        return redirect()->route('postes.select');
+        return [
+            'message' => 'Connexion réussie.',
+            'data' => $user,
+        ];
     }
 
     protected static function loginKind(string $identifier): string
@@ -154,21 +173,30 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
         return 'name';
     }
 
-    public static function logout()
+    public static function logout(): array
     {
         CurrentPostTravail::clear();
         Auth::logout();
 
-        return redirect(url('/'));
+        return [
+            'message' => 'Déconnexion réussie.',
+            'data' => null,
+        ];
     }
 
-    public static function me()
+    public static function me(): array
     {
-        return Auth::user();
+        return [
+            'message' => 'Utilisateur connecté.',
+            'data' => Auth::user(),
+        ];
     }
 
-    public static function all()
+    public static function all(): array
     {
-        return User::latest()->get();
+        return [
+            'message' => 'Liste des utilisateurs chargée.',
+            'data' => User::latest()->get(),
+        ];
     }
 }
