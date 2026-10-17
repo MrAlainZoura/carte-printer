@@ -194,7 +194,7 @@
                 </div>
 
                 <p class="mt-6 text-center text-xs text-gray-400">
-                    &copy; {{ date('Y') }} Mon Application
+                    &copy; {{ date('Y') }} VCarte
                 </p>
 
             </div>
