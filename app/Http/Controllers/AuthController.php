@@ -16,6 +16,13 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
+     public function all()
+    {
+        //$user = User::first();
+        //return event(new Registered($user));
+        //return $user->sendEmailVerificationNotification();
+        return User::all();
+    }
     public function register(Request $request)
     {
         //$user = User::first();

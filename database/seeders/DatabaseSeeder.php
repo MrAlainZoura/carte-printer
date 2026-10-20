@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ProduitSeeder::class,
             PostProduitSeeder::class,
+            UpdateVehiculeTransferPermissionSeeder::class
         ]);
     }
 }

@@ -41,7 +41,10 @@ class AuthService implements AuthServiceInterface
         // Envoi automatique de l’email de vérification
         //$statusMessageSend = $user->sendEmailVerificationNotification();
 
-        return back()->with('success', 'Utilisateur créé. Vérifiez votre email.');
+        return response()->json([
+            'message' => 'Utilisateur créé.',
+            'data' => $user,
+        ], 201);
     }
 
 
@@ -71,11 +74,14 @@ class AuthService implements AuthServiceInterface
 
         // Tentative de connexion
         if (!$token = auth('api')->attempt($loginData)) {
-            return back()->with('error', 'Identifiants incorrects.');
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Identifiants incorrects.',
+            ], 401);
         }
 
-        return to_route('dashboard')->with('token', $token);
-        //return $this->respondWithToken($token);
+        //return to_route('dashboard')->with('token', $token);
+        return $this->respondWithToken($token);
     }
 
 

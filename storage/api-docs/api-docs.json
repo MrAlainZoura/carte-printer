@@ -1,0 +1,1635 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Carte Rose API",
+        "description": "API de gestion Carte Rose. Utilisez Authorization: Bearer <token> pour les routes protégées. Pour les routes liées à un poste, envoyez X-Post-Travail-Id: <id>. La vue globale est disponible aux administrateurs avec X-Post-Travail-Global: true.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/api",
+            "description": "API Carte Rose"
+        }
+    ],
+    "paths": {
+        "/login": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Connexion et obtention d’un JWT",
+                "operationId": "login",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "identifiant",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "identifiant": {
+                                        "type": "string",
+                                        "example": "admin@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Connexion réussie, jeton retourné."
+                    },
+                    "401": {
+                        "description": "Identifiants incorrects."
+                    },
+                    "422": {
+                        "description": "Données invalides."
+                    }
+                },
+                "security": []
+            }
+        },
+        "/logout": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Invalider le JWT courant",
+                "operationId": "logout",
+                "responses": {
+                    "200": {
+                        "description": "Jeton invalidé."
+                    }
+                }
+            }
+        },
+        "/refresh": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Renouveler le JWT courant",
+                "operationId": "refreshToken",
+                "responses": {
+                    "200": {
+                        "description": "Nouveau jeton retourné."
+                    }
+                }
+            }
+        },
+        "/me": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Afficher l’utilisateur connecté",
+                "operationId": "currentUser",
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur authentifié."
+                    }
+                }
+            }
+        },
+        "/postes": {
+            "get": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Lister les postes accessibles",
+                "operationId": "availablePosts",
+                "responses": {
+                    "200": {
+                        "description": "Postes de travail et poste courant."
+                    }
+                }
+            }
+        },
+        "/postes/select": {
+            "post": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Sélectionner un poste de travail",
+                "operationId": "selectPost",
+                "responses": {
+                    "200": {
+                        "description": "Poste sélectionné."
+                    }
+                }
+            }
+        },
+        "/postes/global": {
+            "post": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Activer la vue globale administrateur",
+                "operationId": "selectGlobalView",
+                "responses": {
+                    "200": {
+                        "description": "Vue globale activée."
+                    },
+                    "403": {
+                        "description": "Accès réservé aux administrateurs autorisés."
+                    }
+                }
+            }
+        },
+        "/postes/{id}/open": {
+            "post": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Ouvrir un poste de travail (administrateur)",
+                "operationId": "openPost",
+                "responses": {
+                    "200": {
+                        "description": "Poste ouvert."
+                    },
+                    "404": {
+                        "description": "Poste introuvable."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/initialisation/poste": {
+            "get": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Vérifier l’initialisation du premier poste",
+                "operationId": "initialPostSetupStatus",
+                "responses": {
+                    "200": {
+                        "description": "État de l’initialisation."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Créer le premier poste (administrateur)",
+                "operationId": "createInitialPost",
+                "responses": {
+                    "201": {
+                        "description": "Premier poste créé."
+                    },
+                    "409": {
+                        "description": "Un poste existe déjà."
+                    }
+                }
+            }
+        },
+        "/dashboard": {
+            "get": {
+                "tags": [
+                    "Tableau de bord"
+                ],
+                "summary": "Charger les indicateurs du tableau de bord",
+                "operationId": "dashboard",
+                "responses": {
+                    "200": {
+                        "description": "Indicateurs du tableau de bord."
+                    }
+                }
+            }
+        },
+        "/vehicules": {
+            "get": {
+                "tags": [
+                    "Véhicules"
+                ],
+                "summary": "Lister les véhicules",
+                "operationId": "listVehicles",
+                "responses": {
+                    "200": {
+                        "description": "Liste paginée des véhicules."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Véhicules"
+                ],
+                "summary": "Créer un véhicule avec sa plaque et sa carte rose",
+                "operationId": "createVehicle",
+                "responses": {
+                    "201": {
+                        "description": "Véhicule créé."
+                    },
+                    "422": {
+                        "description": "Données invalides ou stock insuffisant."
+                    }
+                }
+            }
+        },
+        "/vehicules/{id}": {
+            "get": {
+                "tags": [
+                    "Véhicules"
+                ],
+                "summary": "Afficher un véhicule",
+                "operationId": "showVehicle",
+                "responses": {
+                    "200": {
+                        "description": "Détails du véhicule."
+                    },
+                    "404": {
+                        "description": "Véhicule introuvable."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Véhicules"
+                ],
+                "summary": "Modifier un véhicule",
+                "operationId": "updateVehicle",
+                "responses": {
+                    "200": {
+                        "description": "Véhicule modifié."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Véhicules"
+                ],
+                "summary": "Supprimer un véhicule",
+                "operationId": "deleteVehicle",
+                "responses": {
+                    "200": {
+                        "description": "Véhicule supprimé."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/vehicules/create": {
+            "get": {
+                "tags": [
+                    "Véhicules"
+                ],
+                "summary": "Charger les données nécessaires à la création",
+                "operationId": "vehicleFormData",
+                "responses": {
+                    "200": {
+                        "description": "Données de formulaire."
+                    }
+                }
+            }
+        },
+        "/vehicules/{id}/edit": {
+            "get": {
+                "tags": [
+                    "Véhicules"
+                ],
+                "summary": "Charger un véhicule pour modification",
+                "operationId": "editVehicleData",
+                "responses": {
+                    "200": {
+                        "description": "Données du véhicule."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/vehicules/{id}/proprietaire": {
+            "get": {
+                "tags": [
+                    "Véhicules"
+                ],
+                "summary": "Charger les données de transfert de propriétaire",
+                "operationId": "vehicleOwnerTransferData",
+                "responses": {
+                    "200": {
+                        "description": "Véhicule et propriétaires disponibles."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Véhicules"
+                ],
+                "summary": "Transférer le véhicule à un autre propriétaire",
+                "operationId": "transferVehicleOwner",
+                "responses": {
+                    "200": {
+                        "description": "Propriétaire transféré."
+                    },
+                    "422": {
+                        "description": "Données invalides."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/vehicules/{id}/historique-proprietaires": {
+            "get": {
+                "tags": [
+                    "Véhicules"
+                ],
+                "summary": "Afficher l’historique des propriétaires",
+                "operationId": "vehicleOwnerHistory",
+                "responses": {
+                    "200": {
+                        "description": "Historique paginé."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/vehicules/{id}/plaque": {
+            "get": {
+                "tags": [
+                    "Véhicules"
+                ],
+                "summary": "Charger les données de remplacement de plaque",
+                "operationId": "vehiclePlaqueChangeData",
+                "responses": {
+                    "200": {
+                        "description": "Données du véhicule."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Véhicules"
+                ],
+                "summary": "Remplacer la plaque du véhicule",
+                "operationId": "changeVehiclePlaque",
+                "responses": {
+                    "200": {
+                        "description": "Plaque remplacée."
+                    },
+                    "422": {
+                        "description": "Données invalides ou stock insuffisant."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/vehicules/{vehicule}/plaque/{plaque}/edit": {
+            "get": {
+                "tags": [
+                    "Plaques"
+                ],
+                "summary": "Charger une plaque pour modification",
+                "operationId": "editPlaque",
+                "responses": {
+                    "200": {
+                        "description": "Données de la plaque."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "vehicule",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "name": "plaque",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/vehicules/{vehicule}/plaque/{plaque}": {
+            "put": {
+                "tags": [
+                    "Plaques"
+                ],
+                "summary": "Modifier une plaque",
+                "operationId": "updatePlaque",
+                "responses": {
+                    "200": {
+                        "description": "Plaque modifiée."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "vehicule",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "name": "plaque",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/plaques/{plaque}": {
+            "get": {
+                "tags": [
+                    "Plaques"
+                ],
+                "summary": "Afficher une plaque",
+                "operationId": "showPlaque",
+                "responses": {
+                    "200": {
+                        "description": "Plaque chargée."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "plaque",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/vehicules/{vehicule}/carte-rose/{carteRose}/edit": {
+            "get": {
+                "tags": [
+                    "Cartes roses"
+                ],
+                "summary": "Charger une carte rose pour modification",
+                "operationId": "editCarteRose",
+                "responses": {
+                    "200": {
+                        "description": "Données de la carte rose."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "vehicule",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "name": "carteRose",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/vehicules/{vehicule}/carte-rose/{carteRose}": {
+            "put": {
+                "tags": [
+                    "Cartes roses"
+                ],
+                "summary": "Modifier une carte rose",
+                "operationId": "updateCarteRose",
+                "responses": {
+                    "200": {
+                        "description": "Carte rose modifiée."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "vehicule",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "name": "carteRose",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/carte/{id}": {
+            "get": {
+                "tags": [
+                    "Cartes roses"
+                ],
+                "summary": "Générer le PDF de la carte rose",
+                "operationId": "printCarteRose",
+                "responses": {
+                    "200": {
+                        "description": "Document PDF.",
+                        "content": {
+                            "application/pdf": {}
+                        }
+                    },
+                    "404": {
+                        "description": "Véhicule introuvable."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/post-travails": {
+            "get": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Lister les postes de travail",
+                "operationId": "listWorkPosts",
+                "responses": {
+                    "200": {
+                        "description": "Liste paginée des postes."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Créer un poste de travail",
+                "operationId": "createWorkPost",
+                "responses": {
+                    "201": {
+                        "description": "Poste créé."
+                    }
+                }
+            }
+        },
+        "/post-travails/create": {
+            "get": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Charger les données de création",
+                "operationId": "workPostFormData",
+                "responses": {
+                    "200": {
+                        "description": "Données du formulaire."
+                    }
+                }
+            }
+        },
+        "/post-travails/{id}": {
+            "get": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Afficher un poste de travail",
+                "operationId": "showWorkPost",
+                "responses": {
+                    "200": {
+                        "description": "Poste chargé."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Modifier un poste de travail",
+                "operationId": "updateWorkPost",
+                "responses": {
+                    "200": {
+                        "description": "Poste modifié."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Supprimer un poste",
+                "operationId": "deleteWorkPost",
+                "responses": {
+                    "200": {
+                        "description": "Poste supprimé."
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Modifier un poste de travail",
+                "operationId": "patchWorkPost",
+                "responses": {
+                    "200": {
+                        "description": "Poste modifié."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/post-travails/{id}/edit": {
+            "get": {
+                "tags": [
+                    "Postes de travail"
+                ],
+                "summary": "Charger un poste pour modification",
+                "operationId": "editWorkPostData",
+                "responses": {
+                    "200": {
+                        "description": "Données du poste."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/post-produits": {
+            "get": {
+                "tags": [
+                    "Produits des postes"
+                ],
+                "summary": "Lister les produits des postes",
+                "operationId": "listPostProducts",
+                "responses": {
+                    "200": {
+                        "description": "Liste paginée."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Produits des postes"
+                ],
+                "summary": "Affecter un produit à un poste",
+                "operationId": "createPostProduct",
+                "responses": {
+                    "201": {
+                        "description": "Affectation créée."
+                    }
+                }
+            }
+        },
+        "/post-produits/create": {
+            "get": {
+                "tags": [
+                    "Produits des postes"
+                ],
+                "summary": "Charger les données de création",
+                "operationId": "postProductFormData",
+                "responses": {
+                    "200": {
+                        "description": "Données du formulaire."
+                    }
+                }
+            }
+        },
+        "/post-produits/{id}": {
+            "get": {
+                "tags": [
+                    "Produits des postes"
+                ],
+                "summary": "Afficher une affectation",
+                "operationId": "showPostProduct",
+                "responses": {
+                    "200": {
+                        "description": "Affectation chargée."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Produits des postes"
+                ],
+                "summary": "Modifier une affectation",
+                "operationId": "updatePostProduct",
+                "responses": {
+                    "200": {
+                        "description": "Affectation modifiée."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Produits des postes"
+                ],
+                "summary": "Supprimer une affectation",
+                "operationId": "deletePostProduct",
+                "responses": {
+                    "200": {
+                        "description": "Affectation supprimée."
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Produits des postes"
+                ],
+                "summary": "Modifier une affectation",
+                "operationId": "patchPostProduct",
+                "responses": {
+                    "200": {
+                        "description": "Affectation modifiée."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/post-produits/{id}/edit": {
+            "get": {
+                "tags": [
+                    "Produits des postes"
+                ],
+                "summary": "Charger une affectation pour modification",
+                "operationId": "editPostProductData",
+                "responses": {
+                    "200": {
+                        "description": "Données du formulaire."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/approvisionnements": {
+            "get": {
+                "tags": [
+                    "Approvisionnements"
+                ],
+                "summary": "Lister les approvisionnements",
+                "operationId": "listSupplies",
+                "responses": {
+                    "200": {
+                        "description": "Liste paginée."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Approvisionnements"
+                ],
+                "summary": "Créer un approvisionnement",
+                "operationId": "createSupply",
+                "responses": {
+                    "201": {
+                        "description": "Approvisionnement créé."
+                    }
+                }
+            }
+        },
+        "/approvisionnements/create": {
+            "get": {
+                "tags": [
+                    "Approvisionnements"
+                ],
+                "summary": "Charger les données de création",
+                "operationId": "supplyFormData",
+                "responses": {
+                    "200": {
+                        "description": "Données du formulaire."
+                    }
+                }
+            }
+        },
+        "/approvisionnements/{id}": {
+            "get": {
+                "tags": [
+                    "Approvisionnements"
+                ],
+                "summary": "Afficher un approvisionnement",
+                "operationId": "showSupply",
+                "responses": {
+                    "200": {
+                        "description": "Approvisionnement chargé."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Approvisionnements"
+                ],
+                "summary": "Modifier un approvisionnement",
+                "operationId": "updateSupply",
+                "responses": {
+                    "200": {
+                        "description": "Approvisionnement modifié."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Approvisionnements"
+                ],
+                "summary": "Supprimer un approvisionnement",
+                "operationId": "deleteSupply",
+                "responses": {
+                    "200": {
+                        "description": "Approvisionnement supprimé."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/approvisionnements/{id}/edit": {
+            "get": {
+                "tags": [
+                    "Approvisionnements"
+                ],
+                "summary": "Charger un approvisionnement pour modification",
+                "operationId": "editSupplyData",
+                "responses": {
+                    "200": {
+                        "description": "Données du formulaire."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/approvisionnements/{id}/confirm": {
+            "patch": {
+                "tags": [
+                    "Approvisionnements"
+                ],
+                "summary": "Confirmer la réception d’un approvisionnement",
+                "operationId": "confirmSupply",
+                "responses": {
+                    "200": {
+                        "description": "Réception confirmée."
+                    },
+                    "422": {
+                        "description": "Approvisionnement déjà confirmé."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/produits": {
+            "get": {
+                "tags": [
+                    "Produits"
+                ],
+                "summary": "Lister les produits",
+                "operationId": "listProducts",
+                "responses": {
+                    "200": {
+                        "description": "Produits et catégories."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Produits"
+                ],
+                "summary": "Créer un produit",
+                "operationId": "createProduct",
+                "responses": {
+                    "201": {
+                        "description": "Produit créé."
+                    }
+                }
+            }
+        },
+        "/produits/create": {
+            "get": {
+                "tags": [
+                    "Produits"
+                ],
+                "summary": "Charger les données de création",
+                "operationId": "productFormData",
+                "responses": {
+                    "200": {
+                        "description": "Données du formulaire."
+                    }
+                }
+            }
+        },
+        "/produits/{id}": {
+            "get": {
+                "tags": [
+                    "Produits"
+                ],
+                "summary": "Afficher un produit",
+                "operationId": "showProduct",
+                "responses": {
+                    "200": {
+                        "description": "Produit chargé."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Produits"
+                ],
+                "summary": "Modifier un produit",
+                "operationId": "updateProduct",
+                "responses": {
+                    "200": {
+                        "description": "Produit modifié."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Produits"
+                ],
+                "summary": "Supprimer un produit",
+                "operationId": "deleteProduct",
+                "responses": {
+                    "200": {
+                        "description": "Produit supprimé."
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Produits"
+                ],
+                "summary": "Modifier un produit",
+                "operationId": "patchProduct",
+                "responses": {
+                    "200": {
+                        "description": "Produit modifié."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/produits/{id}/edit": {
+            "get": {
+                "tags": [
+                    "Produits"
+                ],
+                "summary": "Charger un produit pour modification",
+                "operationId": "editProductData",
+                "responses": {
+                    "200": {
+                        "description": "Données du formulaire."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/proprietaires": {
+            "get": {
+                "tags": [
+                    "Propriétaires"
+                ],
+                "summary": "Lister les propriétaires",
+                "operationId": "listOwners",
+                "responses": {
+                    "200": {
+                        "description": "Liste paginée."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Propriétaires"
+                ],
+                "summary": "Créer un propriétaire",
+                "operationId": "createOwner",
+                "responses": {
+                    "201": {
+                        "description": "Propriétaire créé."
+                    }
+                }
+            }
+        },
+        "/proprietaires/create": {
+            "get": {
+                "tags": [
+                    "Propriétaires"
+                ],
+                "summary": "Charger les données de création",
+                "operationId": "ownerFormData",
+                "responses": {
+                    "200": {
+                        "description": "Données du formulaire."
+                    }
+                }
+            }
+        },
+        "/proprietaires/{id}": {
+            "get": {
+                "tags": [
+                    "Propriétaires"
+                ],
+                "summary": "Afficher un propriétaire",
+                "operationId": "showOwner",
+                "responses": {
+                    "200": {
+                        "description": "Propriétaire chargé."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Propriétaires"
+                ],
+                "summary": "Modifier un propriétaire",
+                "operationId": "updateOwner",
+                "responses": {
+                    "200": {
+                        "description": "Propriétaire modifié."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Propriétaires"
+                ],
+                "summary": "Supprimer un propriétaire",
+                "operationId": "deleteOwner",
+                "responses": {
+                    "200": {
+                        "description": "Propriétaire supprimé."
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Propriétaires"
+                ],
+                "summary": "Modifier un propriétaire",
+                "operationId": "patchOwner",
+                "responses": {
+                    "200": {
+                        "description": "Propriétaire modifié."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/proprietaires/{id}/edit": {
+            "get": {
+                "tags": [
+                    "Propriétaires"
+                ],
+                "summary": "Charger un propriétaire pour modification",
+                "operationId": "editOwnerData",
+                "responses": {
+                    "200": {
+                        "description": "Données du formulaire."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/users/profile": {
+            "get": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Afficher le profil connecté",
+                "operationId": "userProfile",
+                "responses": {
+                    "200": {
+                        "description": "Profil et statistiques."
+                    }
+                }
+            }
+        },
+        "/users/password": {
+            "put": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Modifier le mot de passe courant",
+                "operationId": "updatePassword",
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe modifié."
+                    },
+                    "422": {
+                        "description": "Mot de passe actuel ou données invalides."
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Lister les utilisateurs (administrateur)",
+                "operationId": "listUsers",
+                "responses": {
+                    "200": {
+                        "description": "Liste paginée."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Créer un utilisateur",
+                "operationId": "createUser",
+                "responses": {
+                    "201": {
+                        "description": "Utilisateur créé."
+                    }
+                }
+            }
+        },
+        "/users/create": {
+            "get": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Charger les données de création",
+                "operationId": "userFormData",
+                "responses": {
+                    "200": {
+                        "description": "Données du formulaire."
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "get": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Afficher un utilisateur",
+                "operationId": "showUser",
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur et statistiques."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Modifier un utilisateur",
+                "operationId": "updateUser",
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur modifié."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Supprimer un utilisateur",
+                "operationId": "deleteUser",
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur supprimé."
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Modifier un utilisateur",
+                "operationId": "patchUser",
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur modifié."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/users/{id}/edit": {
+            "get": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Charger un utilisateur pour modification",
+                "operationId": "editUserData",
+                "responses": {
+                    "200": {
+                        "description": "Données du formulaire."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/users/{id}/reset-password": {
+            "post": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Réinitialiser le mot de passe (administrateur)",
+                "operationId": "resetUserPassword",
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe temporaire retourné."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        },
+        "/roles": {
+            "get": {
+                "tags": [
+                    "Rôles"
+                ],
+                "summary": "Lister les rôles",
+                "operationId": "listRoles",
+                "responses": {
+                    "200": {
+                        "description": "Rôles et permissions."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Rôles"
+                ],
+                "summary": "Créer un rôle",
+                "operationId": "createRole",
+                "responses": {
+                    "201": {
+                        "description": "Rôle créé."
+                    }
+                }
+            }
+        },
+        "/roles/create": {
+            "get": {
+                "tags": [
+                    "Rôles"
+                ],
+                "summary": "Charger les données de création",
+                "operationId": "roleFormData",
+                "responses": {
+                    "200": {
+                        "description": "Données du formulaire."
+                    }
+                }
+            }
+        },
+        "/roles/{role}": {
+            "get": {
+                "tags": [
+                    "Rôles"
+                ],
+                "summary": "Afficher un rôle",
+                "operationId": "showRole",
+                "responses": {
+                    "200": {
+                        "description": "Rôle et permissions."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Rôles"
+                ],
+                "summary": "Modifier un rôle",
+                "operationId": "updateRole",
+                "responses": {
+                    "200": {
+                        "description": "Rôle modifié."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Rôles"
+                ],
+                "summary": "Supprimer un rôle",
+                "operationId": "deleteRole",
+                "responses": {
+                    "200": {
+                        "description": "Rôle supprimé."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "role",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        },
+        "/roles/{role}/edit": {
+            "get": {
+                "tags": [
+                    "Rôles"
+                ],
+                "summary": "Charger un rôle pour modification",
+                "operationId": "editRoleData",
+                "responses": {
+                    "200": {
+                        "description": "Données du rôle."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "role",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        },
+        "/roles/{role}/permissions": {
+            "put": {
+                "tags": [
+                    "Rôles"
+                ],
+                "summary": "Remplacer les permissions d’un rôle",
+                "operationId": "syncRolePermissions",
+                "responses": {
+                    "200": {
+                        "description": "Permissions mises à jour."
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "role",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Jeton obtenu avec POST /login.",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ],
+    "tags": [
+        {
+            "name": "Authentification",
+            "description": "Authentification"
+        },
+        {
+            "name": "Postes de travail",
+            "description": "Postes de travail"
+        },
+        {
+            "name": "Tableau de bord",
+            "description": "Tableau de bord"
+        },
+        {
+            "name": "Véhicules",
+            "description": "Véhicules"
+        },
+        {
+            "name": "Plaques",
+            "description": "Plaques"
+        },
+        {
+            "name": "Cartes roses",
+            "description": "Cartes roses"
+        },
+        {
+            "name": "Produits des postes",
+            "description": "Produits des postes"
+        },
+        {
+            "name": "Approvisionnements",
+            "description": "Approvisionnements"
+        },
+        {
+            "name": "Produits",
+            "description": "Produits"
+        },
+        {
+            "name": "Propriétaires",
+            "description": "Propriétaires"
+        },
+        {
+            "name": "Utilisateurs",
+            "description": "Utilisateurs"
+        },
+        {
+            "name": "Rôles",
+            "description": "Rôles"
+        }
+    ]
+}
