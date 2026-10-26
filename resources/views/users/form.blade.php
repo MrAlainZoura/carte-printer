@@ -57,7 +57,9 @@
                     @error('role')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
             @endif
-           
+            @if(!$record->exists)
+                <p class="text-sm text-gray-500 sm:col-span-2">Mot de passe initial : 0000.</p>
+            @endif
         </div>
         <div class="mt-7 flex justify-end gap-3 border-t border-gray-100 pt-5">
             <a href="{{ route('users.index') }}" class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700">Annuler</a>

@@ -14,6 +14,12 @@ class CurrentPostTravail
 
     public static function id(): ?int
     {
+        if (request()->is('api/*')) {
+            $id = request()->attributes->get('api_current_post_id');
+
+            return $id !== null ? (int) $id : null;
+        }
+
         $id = Session::get(self::SESSION_POST_ID);
 
         return $id !== null ? (int) $id : null;
@@ -28,6 +34,10 @@ class CurrentPostTravail
 
     public static function isGlobal(): bool
     {
+        if (request()->is('api/*')) {
+            return (bool) request()->attributes->get('api_current_post_global', false);
+        }
+
         return (bool) Session::get(self::SESSION_GLOBAL, false);
     }
 

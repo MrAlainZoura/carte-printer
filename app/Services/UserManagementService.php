@@ -14,6 +14,8 @@ use Spatie\Permission\Models\Role;
 
 class UserManagementService
 {
+    private const DEFAULT_CREATED_USER_PASSWORD = '0000';
+
     public function index(Request $request): array
     {
         $query = $this->visibleUsersQuery()->with(['roles', 'postTravails']);
@@ -55,7 +57,7 @@ class UserManagementService
             'name' => $validated['name'],
             'email' => $validated['email'] ?? null,
             'tel' => $validated['tel'] ?? null,
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make($validated['password'] ?? self::DEFAULT_CREATED_USER_PASSWORD),
         ]);
         $user->assignRole($validated['role']);
         $user->postTravails()->attach($validated['post_travail_id'], ['is_default' => true]);
@@ -168,7 +170,7 @@ class UserManagementService
             'tel' => ['nullable', 'string', 'max:255', $telRule],
         ];
         if (! $record || $manageAccess) {
-            $rules['password'] = [$record ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'];
+            $rules['password'] = ['nullable', 'string', 'min:8', 'confirmed'];
             $rules['post_travail_id'] = ['required', 'integer', 'exists:post_travails,id'];
             $rules['role'] = ['required', 'string', Rule::in($assignableRoles)];
         }

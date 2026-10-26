@@ -6,7 +6,7 @@ Stack    : Laravel 13 / PHP 8.3 / Blade / Vite / Spatie Permission / JWT / DomPD
 Objectif : Gestion des cartes roses, plaques d'immatriculation, véhicules,
            propriétaires et stocks de produits par poste de travail.
 
-Dernière mise à jour : 2026-10-16
+Dernière mise à jour : 2026-10-20
 
 
 --------------------------------------------------------------------------------
@@ -24,7 +24,9 @@ d'immatriculation / cartes roses. Elle permet de :
   - gérer les stocks de produits par poste (approvisionnements) ;
   - administrer utilisateurs, rôles et permissions.
 
-Une API JWT minimale existe aussi (login / logout / refresh / me).
+Une API JSON JWT est disponible en plus du web. Elle réutilise les services
+métier du web et expose aussi les contrôleurs API dédiés. Sa documentation
+interactive est générée avec Swagger / OpenAPI.
 
 
 --------------------------------------------------------------------------------
@@ -95,7 +97,11 @@ Organisation type Laravel avec couche Services + Contracts.
 
   bootstrap/app.php     Routing + alias middleware + exceptions Spatie
   routes/web.php        Application principale (session)
-  routes/api.php        Auth JWT minimale
+  routes/api.php        Auth JWT et endpoints métier JSON
+  app/Http/Controllers/Api/ Contrôleurs JSON utilisant les services métier
+  app/OpenApi/           Spécification OpenAPI (attributs PHP)
+  config/l5-swagger.php Configuration Swagger UI / génération OpenAPI
+  storage/api-docs/      Fichiers de spécification générés
   resources/views/      Blade (layouts, CRUD, auth, carte)
   database/migrations/  Schéma
   database/seeders/     Rôles, postes, users, produits, stocks
@@ -111,6 +117,17 @@ Flux typique requête web
     -> Service
     -> Model / DB
     -> View ou redirect
+
+Flux typique requête API
+------------------------
+  Request /api
+    -> JwtMiddleware (Bearer JWT et guard api)
+    -> contexte poste par défaut ou en-têtes API
+    -> rôle / permission (Spatie)
+    -> api.post.selected (routes métier nécessitant un poste)
+    -> Contrôleur API
+    -> Service métier partagé avec le web
+    -> Réponse JSON (ou PDF pour l'impression de carte)
 
 
 --------------------------------------------------------------------------------
@@ -212,16 +229,49 @@ API (JWT)
 ---------
   Package : tymon/jwt-auth
   Middleware : JwtMiddleware
-  Routes (prefix /api) :
+  Authentification (prefix /api) :
     POST /api/login
     POST /api/logout
     POST /api/refresh
     GET  /api/me
 
+  Les autres endpoints API métier (véhicules, propriétaires, cartes roses,
+  plaques, postes, produits, approvisionnements, utilisateurs, rôles et
+  dashboard) se trouvent dans routes/api.php. Les contrôleurs dédiés, dans
+  app/Http/Controllers/Api, délèguent aux mêmes services métier que le web.
+
+  Chaque requête protégée utilise :
+    Authorization: Bearer <token>
+    Accept: application/json
+
+  Le middleware choisit le poste par défaut de l'utilisateur si aucun contexte
+  n'est indiqué. Pour choisir le poste d'une requête :
+    X-Post-Travail-Id: <id>
+  Cet ID doit appartenir à l'utilisateur, sauf pour un administrateur. Un
+  administrateur peut demander la vue globale ainsi :
+    X-Post-Travail-Global: true
+  Ces en-têtes sont des contextes par requête, sans session API. Les routes de
+  sélection de poste restent accessibles sans contexte déjà sélectionné.
+
+Swagger / OpenAPI
+-----------------
+  Interface interactive : GET /api/documentation
+  Spécification JSON    : GET /docs?api-docs.json
+  Source des opérations : app/OpenApi/ApiDocumentation.php
+  Générer / mettre à jour :
+    php artisan l5-swagger:generate
+
+  OpenAPI est une spécification structurée et normalisée qui décrit les
+  endpoints, leurs paramètres, réponses et sécurité. Swagger UI lit cette
+  spécification pour présenter les routes et permettre de les tester. Aucun
+  service OpenAI ni modèle d'intelligence artificielle n'est utilisé.
+  L'interface et le fichier de documentation sont publics par défaut ; régler
+  config/l5-swagger.php avant de les restreindre pour un déploiement privé.
+
 Permissions (Spatie, guard web)
 -------------------------------
   Alias middleware (bootstrap/app.php) :
-    role, permission, role_or_permission, post.selected
+    role, permission, role_or_permission, post.selected, api.post.selected
 
   Rôles seedés :
     admin       — toutes les permissions
@@ -408,7 +458,8 @@ Commandes :
 14.2 Packages Composer — production (composer.json require)
 ----------------------------------------------------------
   laravel/framework              ^13.8   Framework principal
-  laravel/sanctum                ^4.0    Auth API tokens (Sanctum)
+  darkaonline/l5-swagger         ^11.2   Swagger UI et intégration OpenAPI
+  laravel/sanctum                ^4.0    Package présent (l'API utilise JWT)
   laravel/tinker                 ^3.0    REPL artisan tinker
   spatie/laravel-permission      ^8.3    Rôles & permissions
   tymon/jwt-auth                 ^2.3    Authentification JWT (API)
@@ -443,7 +494,8 @@ Commandes :
 14.5 Rôle de chaque techno métier
 ---------------------------------
   Spatie Permission  -> middleware role / permission sur les routes web
-  JWT (tymon)        -> routes /api/login|logout|refresh|me
+  JWT (tymon)        -> authentification des routes API
+  L5 Swagger         -> Swagger UI et génération de la spécification OpenAPI
   DomPDF             -> impression carte rose (PDF)
   Simple QrCode      -> QR sur la carte (qr_token UUID)
   Sanctum            -> tokens API (présent dans le projet)
@@ -464,6 +516,10 @@ Commandes :
 
   routes/web.php
   routes/api.php
+  app/Http/Controllers/Api/
+  app/OpenApi/ApiDocumentation.php
+  config/l5-swagger.php
+  storage/api-docs/api-docs.json (généré)
   bootstrap/app.php
   app/Services/VehiculesService.php
   app/Support/CurrentPostTravail.php
@@ -480,7 +536,10 @@ Commandes :
   - Orthographe "propietaire" volontaire (historique) : ne pas "corriger"
     sans migration de rename.
   - Routes /test-email et /test-php présentes (à retirer en prod).
-  - API JWT encore minimale (auth seulement) ; le métier est surtout web.
+  - Le contexte de poste API est défini par requête ; il ne persiste pas comme
+    la sélection de poste en session côté web.
+  - Swagger UI et le JSON OpenAPI sont publics par défaut ; protéger leurs
+    routes via config/l5-swagger.php si la documentation doit être privée.
   - La création véhicule et le remplacement de plaque exigent un stock
     disponible de produits « Plaque » et/ou « Carte rose » au poste courant.
   - planTravail.txt / uml*.txt à la racine concernent un autre projet
@@ -500,6 +559,7 @@ Commandes :
   [ ] Créer un véhicule et vérifier plaque + carte rose + stock
   [ ] Tester une permission refusée (rôle agent vs admin)
   [ ] Imprimer une carte rose (PDF/QR)
+  [ ] Générer la documentation OpenAPI et ouvrir /api/documentation
 
 ================================================================================
   Fin de la documentation développeur — CarteRose

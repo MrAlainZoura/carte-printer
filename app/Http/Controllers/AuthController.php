@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\AuthService;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
@@ -16,12 +15,21 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
-    public function register(Request $request)
+     public function all()
     {
         //$user = User::first();
         //return event(new Registered($user));
         //return $user->sendEmailVerificationNotification();
+        return User::all();
+    }
+    public function register(Request $request)
+    {
         return $this->authService->register($request);
+    }
+
+    public function registrationOptions()
+    {
+        return $this->authService->registrationOptions();
     }
 
     public function login(Request $request)

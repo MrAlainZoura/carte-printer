@@ -1,0 +1,25 @@
+.muted {
+  color: var(--color-muted);
+}
+
+.stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.spread {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.full-width {
+  width: 100%;
+}

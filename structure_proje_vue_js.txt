@@ -1,0 +1,90 @@
+mon-projet-vue/
+│
+├── public/
+│
+├── src/
+│   │
+│   ├── assets/
+│   │   ├── images/
+│   │   ├── icons/
+│   │   └── styles/
+│   │       ├── main.css
+│   │       ├── variables.css
+│   │       └── utilities.css
+│   │
+│   ├── components/
+│   │   ├── common/
+│   │   │   ├── BaseButton.vue
+│   │   │   ├── BaseInput.vue
+│   │   │   ├── BaseModal.vue
+│   │   │   ├── BaseLoader.vue
+│   │   │   └── BasePagination.vue
+│   │   │
+│   │   └── layout/
+│   │       ├── AppHeader.vue
+│   │       ├── AppSidebar.vue
+│   │       └── AppFooter.vue
+│   │
+│   ├── layouts/
+│   │   ├── DefaultLayout.vue
+│   │   ├── AuthLayout.vue
+│   │   └── DashboardLayout.vue
+│   │
+│   ├── modules/
+│   │   ├── auth/
+│   │   │   ├── components/
+│   │   │   │   └── LoginForm.vue
+│   │   │   ├── views/
+│   │   │   │   ├── LoginView.vue
+│   │   │   │   └── RegisterView.vue
+│   │   │   ├── services/
+│   │   │   │   └── auth.service.js
+│   │   │   └── stores/
+│   │   │       └── auth.store.js
+│   │   │
+│   │   ├── users/
+│   │   │   ├── components/
+│   │   │   │   ├── UserTable.vue
+│   │   │   │   └── UserForm.vue
+│   │   │   ├── views/
+│   │   │   │   ├── UserListView.vue
+│   │   │   │   ├── UserCreateView.vue
+│   │   │   │   └── UserEditView.vue
+│   │   │   ├── services/
+│   │   │   │   └── user.service.js
+│   │   │   └── stores/
+│   │   │       └── user.store.js
+│   │   │
+│   │   └── products/
+│   │       ├── components/
+│   │       ├── views/
+│   │       ├── services/
+│   │       └── stores/
+│   │
+│   ├── services/
+│   │   └── api.js
+│   │
+│   ├── composables/
+│   │   ├── usePagination.js
+│   │   └── useNotification.js
+│   │
+│   ├── router/
+│   │   ├── index.js
+│   │   └── guards.js
+│   │
+│   ├── stores/
+│   │   └── app.store.js
+│   │
+│   ├── utils/
+│   │   ├── formatters.js
+│   │   └── validators.js
+│   │
+│   ├── App.vue
+│   └── main.js
+│
+├── .env
+├── .env.example
+├── .gitignore
+├── index.html
+├── package.json
+└── vite.config.js

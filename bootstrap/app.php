@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'post.selected' => \App\Http\Middleware\EnsurePostTravailSelected::class,
+            'api.post.selected' => \App\Http\Middleware\EnsureApiPostTravailSelected::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

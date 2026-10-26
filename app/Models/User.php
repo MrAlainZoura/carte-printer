@@ -19,6 +19,8 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements JWTSubject
 {
+    protected string $guard_name = 'web';
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable, SoftDeletes;
 
@@ -70,6 +72,7 @@ class User extends Authenticatable implements JWTSubject
         ];
 
         return \Spatie\Permission\Models\Role::query()
+            ->where('guard_name', 'web')
             ->where('name', '!=', 'admin')
             ->orderBy('name')
             ->pluck('name')

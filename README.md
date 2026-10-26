@@ -1,58 +1,141 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# CarteRose
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+CarteRose est une application Laravel de gestion des véhicules, propriétaires,
+plaques d’immatriculation, cartes roses et stocks par poste de travail. Elle
+propose une interface web Blade et une API JSON sécurisée par JWT. Les deux
+interfaces utilisent les mêmes services métier ; l’authentification API reste
+distincte de l’authentification web par session.
 
-## About Laravel
+## Fonctionnalités
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Gestion des véhicules, des propriétaires, des cartes roses et des plaques.
+- Gestion des postes de travail, des produits, des stocks et des approvisionnements.
+- Gestion des utilisateurs, des rôles et des permissions.
+- Génération et impression PDF des cartes roses avec QR code.
+- API JSON avec permissions et sélection du poste de travail.
+- Documentation interactive de l’API avec Swagger UI et OpenAPI.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Installation et lancement
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Prérequis : PHP 8.3+, Composer, Node.js/npm et une base de données configurée.
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env
+php artisan key:generate
+# Configurez DB_* dans .env, puis :
+php artisan migrate --seed
+npm install
+composer run dev
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Pour exécuter uniquement le serveur Laravel :
 
-## Contributing
+```bash
+php artisan serve
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Application Vue
 
-## Code of Conduct
+Le frontend Vue indépendant se trouve dans `frontend-vue/`. Il utilise Vue 3,
+Pinia, Tailwind CSS et Flowbite, et communique avec l’API Laravel via JWT. Il
+propose notamment le tableau de bord Blade-like, les véhicules et leurs
+propriétaires, les produits du catalogue et des postes, les approvisionnements,
+les postes de travail, les utilisateurs, les rôles et le profil utilisateur.
+La navigation Vue tient compte des permissions renvoyées par l’API, qui restent
+également contrôlées côté serveur.
+Après avoir lancé Laravel sur le port 8000 :
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+cd frontend-vue
+npm install
+cp .env.example .env
+npm run dev
+```
 
-## Security Vulnerabilities
+L’interface est disponible sur `http://localhost:5173`. Si nécessaire, modifiez
+`VITE_API_BASE_URL` dans `frontend-vue/.env` pour pointer vers l’API.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## API et authentification
 
-## License
+Les endpoints API sont préfixés par `/api`. Commencez par obtenir un jeton :
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```http
+POST /api/login
+Content-Type: application/json
+
+{
+  "identifiant": "admin@example.com",
+  "password": "votre-mot-de-passe"
+}
+```
+
+Envoyez ensuite le jeton retourné aux endpoints protégés :
+
+```http
+Authorization: Bearer <token>
+Accept: application/json
+```
+
+L’inscription publique utilise `GET /api/register/options` pour récupérer les
+postes actifs et les rôles non-administrateur, puis `POST /api/register` avec le
+nom, l’email, le téléphone, le poste, le rôle, le mot de passe et sa confirmation.
+L’inscription est limitée en fréquence, fermée selon la même règle que le web,
+et ne permet jamais de créer un administrateur. Après création, l’utilisateur
+se connecte via `POST /api/login`.
+
+Les autres routes d’authentification sont `POST /api/login`, `POST /api/logout`,
+`POST /api/refresh` et `GET /api/me`. L’API métier couvre notamment les
+véhicules, propriétaires, plaques, cartes roses, postes de travail, produits,
+stocks, approvisionnements, utilisateurs, rôles et le tableau de bord.
+
+Pour les opérations liées à un poste, le middleware sélectionne par défaut le
+poste de travail par défaut de l’utilisateur. Pour cibler un autre poste
+accessible à l’utilisateur, ajoutez :
+
+```http
+X-Post-Travail-Id: 12
+```
+
+Les administrateurs autorisés peuvent demander la vue globale avec :
+
+```http
+X-Post-Travail-Global: true
+```
+
+La sélection explicite d’un poste et la vue globale sont des contextes par
+requête ; l’API ne dépend pas d’une session web. Les permissions et rôles sont
+également vérifiés sur les endpoints API.
+
+## Swagger, OpenAPI et OpenAI
+
+- **Swagger UI** est l’interface web interactive pour parcourir et essayer les
+  endpoints documentés : `/api/documentation`.
+- **OpenAPI** est le format normalisé de la spécification qui décrit les routes,
+  méthodes HTTP, paramètres, réponses et sécurité JWT. Cette spécification est
+  générée depuis `app/OpenApi/ApiDocumentation.php` et servie au format JSON par
+  `/docs?api-docs.json`.
+- **OpenAI n’est pas utilisé** dans ce projet. OpenAPI n’est pas un modèle
+  d’intelligence artificielle : c’est uniquement le format de description de
+  l’API.
+
+Après avoir modifié les annotations OpenAPI, régénérez le document avec :
+
+```bash
+php artisan l5-swagger:generate
+```
+
+Les routes Swagger et le document sont publics par défaut ; ne les exposez pas
+si votre déploiement exige une documentation privée.
+
+## Architecture
+
+- `routes/web.php` : interface web et routes avec authentification par session.
+- `routes/api.php` : endpoints JSON et authentification API JWT.
+- `app/Http/Controllers/Api/` : contrôleurs API fins qui réutilisent les services.
+- `app/Services/` : logique métier commune au web et à l’API.
+- `app/OpenApi/ApiDocumentation.php` : définition de la documentation OpenAPI.
+- `app/Support/CurrentPostTravail.php` : contexte de poste pour les requêtes.
+
+Le détail du domaine et les consignes de développement sont dans
+[`DOCUMENTATION_DEV.txt`](DOCUMENTATION_DEV.txt).
