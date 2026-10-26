@@ -35,6 +35,27 @@ Pour exécuter uniquement le serveur Laravel :
 php artisan serve
 ```
 
+## Application Vue
+
+Le frontend Vue indépendant se trouve dans `frontend-vue/`. Il utilise Vue 3,
+Pinia, Tailwind CSS et Flowbite, et communique avec l’API Laravel via JWT. Il
+propose notamment le tableau de bord Blade-like, les véhicules et leurs
+propriétaires, les produits du catalogue et des postes, les approvisionnements,
+les postes de travail, les utilisateurs, les rôles et le profil utilisateur.
+La navigation Vue tient compte des permissions renvoyées par l’API, qui restent
+également contrôlées côté serveur.
+Après avoir lancé Laravel sur le port 8000 :
+
+```bash
+cd frontend-vue
+npm install
+cp .env.example .env
+npm run dev
+```
+
+L’interface est disponible sur `http://localhost:5173`. Si nécessaire, modifiez
+`VITE_API_BASE_URL` dans `frontend-vue/.env` pour pointer vers l’API.
+
 ## API et authentification
 
 Les endpoints API sont préfixés par `/api`. Commencez par obtenir un jeton :
@@ -56,7 +77,14 @@ Authorization: Bearer <token>
 Accept: application/json
 ```
 
-Les routes d’authentification sont `POST /api/login`, `POST /api/logout`,
+L’inscription publique utilise `GET /api/register/options` pour récupérer les
+postes actifs et les rôles non-administrateur, puis `POST /api/register` avec le
+nom, l’email, le téléphone, le poste, le rôle, le mot de passe et sa confirmation.
+L’inscription est limitée en fréquence, fermée selon la même règle que le web,
+et ne permet jamais de créer un administrateur. Après création, l’utilisateur
+se connecte via `POST /api/login`.
+
+Les autres routes d’authentification sont `POST /api/login`, `POST /api/logout`,
 `POST /api/refresh` et `GET /api/me`. L’API métier couvre notamment les
 véhicules, propriétaires, plaques, cartes roses, postes de travail, produits,
 stocks, approvisionnements, utilisateurs, rôles et le tableau de bord.

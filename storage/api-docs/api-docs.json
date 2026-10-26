@@ -57,6 +57,95 @@
                 "security": []
             }
         },
+        "/register/options": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Charger les postes et rôles disponibles à l’inscription",
+                "operationId": "registrationOptions",
+                "responses": {
+                    "200": {
+                        "description": "Options d’inscription disponibles."
+                    },
+                    "403": {
+                        "description": "Les inscriptions sont fermées."
+                    }
+                },
+                "security": []
+            }
+        },
+        "/register": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Créer un compte utilisateur",
+                "operationId": "register",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "tel",
+                                    "post_travail_id",
+                                    "role",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Jean Dupont"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "jean@example.com"
+                                    },
+                                    "tel": {
+                                        "type": "string",
+                                        "example": "+243812345678"
+                                    },
+                                    "post_travail_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "example": "agent"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Compte créé. Une connexion séparée est requise."
+                    },
+                    "403": {
+                        "description": "Les inscriptions sont fermées."
+                    },
+                    "422": {
+                        "description": "Données invalides."
+                    }
+                },
+                "security": []
+            }
+        },
         "/logout": {
             "post": {
                 "tags": [

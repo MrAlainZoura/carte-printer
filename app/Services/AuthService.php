@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\Contracts\AuthServiceInterface;
 use App\Enums\AuthMessage;
+use App\Models\PostTravail;
 use App\Models\User;
 use App\Traits\RespondWithTokenTrait;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthService implements AuthServiceInterface
@@ -17,34 +19,70 @@ class AuthService implements AuthServiceInterface
 
     public function register(Request $request)
     {
-        //return response()->json([$request->all()]);
-        $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
-            // Téléphone obligatoire, format international
-            'tel'      => [
+        abort_if(AuthServiceWeb::hasSecondaryAdmin(), 403, 'Les inscriptions sont fermées.');
+
+        $request->merge([
+            'name' => trim((string) $request->input('name')),
+            'email' => mb_strtolower(trim((string) $request->input('email'))),
+            'tel' => trim((string) $request->input('tel')),
+        ]);
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'tel' => [
                 'required',
                 'string',
-                'unique:users',
-                'regex:/^\+[1-9][0-9]{7,14}$/'
+                Rule::unique('users', 'tel'),
+                'regex:/^\+[1-9][0-9]{7,14}$/',
             ],
+            'post_travail_id' => [
+                'required',
+                'integer',
+                Rule::exists('post_travails', 'id')->where('actif', true),
+            ],
+            'role' => [
+                'required',
+                'string',
+                Rule::exists('roles', 'name')->where(fn ($query) => $query
+                    ->where('guard_name', 'web')
+                    ->where('name', '!=', 'admin')),
+            ],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        $user = User::create([
-            'name'     => $request->name,
-            'email'    => strtolower($request->email), // normalisation email
-            'tel'      => $request->tel,               // correction ici
-            'password' => Hash::make($request->password),
-        ]);
+        $user = DB::transaction(function () use ($validated) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'tel' => $validated['tel'],
+                'password' => Hash::make($validated['password']),
+            ]);
+            $user->assignRole($validated['role']);
+            $user->postTravails()->attach($validated['post_travail_id'], ['is_default' => true]);
 
-        // Envoi automatique de l’email de vérification
-        //$statusMessageSend = $user->sendEmailVerificationNotification();
+            return $user->load(['roles', 'postTravails']);
+        });
 
         return response()->json([
-            'message' => 'Utilisateur créé.',
+            'message' => 'Compte créé. Vous pouvez maintenant vous connecter.',
             'data' => $user,
         ], 201);
+    }
+
+    public function registrationOptions()
+    {
+        abort_if(AuthServiceWeb::hasSecondaryAdmin(), 403, 'Les inscriptions sont fermées.');
+
+        return response()->json([
+            'message' => "Options d’inscription chargées.",
+            'data' => [
+                'posts' => PostTravail::query()
+                    ->where('actif', true)
+                    ->orderBy('libele')
+                    ->get(['id', 'libele']),
+                'roles' => User::assignableRoleLabels(),
+            ],
+        ]);
     }
 
 
@@ -62,16 +100,13 @@ class AuthService implements AuthServiceInterface
             // Cas email
             $identifiant = strtolower($identifiant);
             $loginData = ['email' => $identifiant, 'password' => $password];
-
         } elseif (preg_match('/^\+[1-9][0-9]{7,14}$/', $identifiant)) {
             // Cas téléphone : format international obligatoire (+ suivi de chiffres)
             $loginData = ['tel' => $identifiant, 'password' => $password];
-
         } else {
             // Cas nom d’utilisateur
-            $loginData = ['name' => strtolower($identifiant), 'password' => $password];
+            $loginData = ['name' => $identifiant, 'password' => $password];
         }
-
         // Tentative de connexion
         if (!$token = auth('api')->attempt($loginData)) {
             return response()->json([
@@ -99,6 +134,9 @@ class AuthService implements AuthServiceInterface
 
     public function me()
     {
-        return response()->json(JWTAuth::user());
+        $user = JWTAuth::user();
+        $user->loadMissing(['roles.permissions', 'permissions']);
+
+        return response()->json($user);
     }
 }

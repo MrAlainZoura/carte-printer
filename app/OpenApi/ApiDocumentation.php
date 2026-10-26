@@ -46,6 +46,49 @@ use OpenApi\Attributes as OA;
         ]
     )
 )]
+#[OA\PathItem(
+    path: '/register/options',
+    get: new OA\Get(
+        operationId: 'registrationOptions',
+        tags: ['Authentification'],
+        summary: 'Charger les postes et rôles disponibles à l’inscription',
+        security: [],
+        responses: [
+            new OA\Response(response: 200, description: 'Options d’inscription disponibles.'),
+            new OA\Response(response: 403, description: 'Les inscriptions sont fermées.'),
+        ]
+    )
+)]
+#[OA\PathItem(
+    path: '/register',
+    post: new OA\Post(
+        operationId: 'register',
+        tags: ['Authentification'],
+        summary: 'Créer un compte utilisateur',
+        security: [],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                type: 'object',
+                required: ['name', 'email', 'tel', 'post_travail_id', 'role', 'password', 'password_confirmation'],
+                properties: [
+                    new OA\Property(property: 'name', type: 'string', example: 'Jean Dupont'),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'jean@example.com'),
+                    new OA\Property(property: 'tel', type: 'string', example: '+243812345678'),
+                    new OA\Property(property: 'post_travail_id', type: 'integer', example: 1),
+                    new OA\Property(property: 'role', type: 'string', example: 'agent'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password'),
+                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Compte créé. Une connexion séparée est requise.'),
+            new OA\Response(response: 403, description: 'Les inscriptions sont fermées.'),
+            new OA\Response(response: 422, description: 'Données invalides.'),
+        ]
+    )
+)]
 #[OA\PathItem(path: '/logout', post: new OA\Post(operationId: 'logout', tags: ['Authentification'], summary: 'Invalider le JWT courant', responses: [new OA\Response(response: 200, description: 'Jeton invalidé.')]))]
 #[OA\PathItem(path: '/refresh', post: new OA\Post(operationId: 'refreshToken', tags: ['Authentification'], summary: 'Renouveler le JWT courant', responses: [new OA\Response(response: 200, description: 'Nouveau jeton retourné.')]))]
 #[OA\PathItem(path: '/me', get: new OA\Get(operationId: 'currentUser', tags: ['Authentification'], summary: 'Afficher l’utilisateur connecté', responses: [new OA\Response(response: 200, description: 'Utilisateur authentifié.')]))]
