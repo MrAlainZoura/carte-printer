@@ -90,7 +90,7 @@
             position: absolute;
             top: 8mm;
             left: 42mm;
-            width: 34mm;
+            width: 38mm;
             padding: 2;
             font-weight: bold;
         }
@@ -107,8 +107,9 @@
         .vline {
             /*height: 5mm;
             line-height: 3.2mm;*/
-            overflow: hidden;
-            white-space: nowrap;
+           
+            white-space: normal;
+            overflow-wrap: break-word;
         }
         .pds{
             margin-top: 6mm;
