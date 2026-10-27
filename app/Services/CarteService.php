@@ -74,10 +74,10 @@ class CarteService implements CarteServiceInterface
             'puissance' => $vehicule->puissance,
             'couleur' => $vehicule->couleur,
             'usage' => $vehicule->usage,
-            'cartinspection' => $vehicule->cartinspection,
-            'Annee circulation' => $vehicule->an_circulation,
+            //'cartinspection' => $vehicule->cartinspection,
+            //'Annee circulation' => $vehicule->an_circulation,
             'proprietaire' => $proprietaire?->nom_complet ?? $proprietaire?->raison_sociale,
-            'Adresse' => $proprietaire?->adresse_physique,
+            //'Adresse' => $proprietaire?->adresse_physique,
         ];
 
         $createAt = Carbon::parse($vehicule->created_at);
