@@ -23,8 +23,8 @@ class AuthServiceWeb implements AuthServiceInterfaceWeb
     public static function hasSecondaryAdmin(): bool
     {
         return User::role('admin')
-            ->where('email', '!=', self::SEEDED_ADMIN_EMAIL)
-            ->exists();
+            //->where('email', '!=', self::SEEDED_ADMIN_EMAIL)
+            ->count() <= 2;
     }
 
     public static function register(Request $request): array

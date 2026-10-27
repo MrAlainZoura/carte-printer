@@ -47,12 +47,18 @@
             /*background: #7171e8;*/
         }
 
-        .line {
+        .line0 {
             /*height: 5mm;*/
             /*line-height: 5mm;*/
             margin-bottom: 1mm;
             overflow: hidden;
             white-space: nowrap;
+        }
+        .line {
+            padding-right: 1mm;
+            margin-bottom: 1mm;
+            white-space: normal;
+            overflow-wrap: break-word;
         }
 
         .qr-block {
@@ -84,7 +90,7 @@
             position: absolute;
             top: 8mm;
             left: 42mm;
-            width: 22mm;
+            width: 34mm;
             padding: 2;
             font-weight: bold;
         }
@@ -115,7 +121,7 @@
 
         <div class="owner-block">
             <div class="line">{{ $vehicule->proprietaire?->nom_complet ?? $vehicule->proprietaire?->raison_sociale ?? '-' }}</div>
-            <div class="line">{{ $vehicule->proprietaire?->adresse_physique ?? 'Non renseigné' }}</div>
+            <div class="line">{{ $vehicule->proprietaire?->adresse_physique ?? '-' }}</div>
             <div class="line"></div>
             <div class="pds">
                 <div class="line">{{ $vehicule->an_circulation }}</div>
