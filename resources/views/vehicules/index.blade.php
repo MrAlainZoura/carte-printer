@@ -44,6 +44,27 @@
 
     <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
 
+        <form method="GET" action="{{ route('vehicules.index') }}" class="flex flex-col gap-3 border-b border-gray-200 p-4 sm:flex-row">
+            <label for="search" class="sr-only">Rechercher un véhicule</label>
+            <input
+                type="search"
+                name="search"
+                id="search"
+                value="{{ $search }}"
+                placeholder="Immatriculation, marque, type ou propriétaire…"
+                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-blue-500 sm:max-w-md">
+            <div class="flex gap-2">
+                <button type="submit" class="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
+                    Rechercher
+                </button>
+                @if($search !== '')
+                    <a href="{{ route('vehicules.index') }}" class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        Effacer
+                    </a>
+                @endif
+            </div>
+        </form>
+
         <div class="overflow-x-auto">
 
             <table class="w-full text-left text-sm text-gray-600">
@@ -126,9 +147,10 @@
                             <td colspan="7" class="px-6 py-12 text-center">
 
                                 <p class="font-medium text-gray-900">
-                                    Aucun véhicule enregistré
+                                    {{ $search !== '' ? 'Aucun véhicule ne correspond à la recherche' : 'Aucun véhicule enregistré' }}
                                 </p>
 
+                                @if($search === '')
                                 <p class="mt-2 text-sm text-gray-500">
                                     Commencez par ajouter votre premier véhicule.
                                 </p>
@@ -139,6 +161,7 @@
                                     Enregistrer un véhicule
                                 </a>
                                 @endcan
+                                @endif
 
                             </td>
                         </tr>

@@ -38,12 +38,6 @@
                 Modifier
             </a>
             @endcan
-            @can('vehicule.transfer')
-            <a href="{{ route('vehicules.proprietaires.transfer', $vehicule->id) }}"
-               class="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-800 transition hover:bg-blue-100">
-                Changer de propriétaire
-            </a>
-            @endcan
             <a href="{{ route('vehicules.proprietaires.history', $vehicule->id) }}"
                class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
                 Historique des propriétaires
@@ -71,6 +65,12 @@
                 <div>
                     <h2 class="font-semibold text-gray-900">Propriétaire du véhicule</h2>
                 </div>
+                @can('vehicule.transfer')
+                    <a href="{{ route('vehicules.proprietaires.transfer', $vehicule->id) }}"
+                       class="ml-auto rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-800 hover:bg-blue-100">
+                        Changer de propriétaire
+                    </a>
+                @endcan
             </div>
             <div class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
                 <div class="rounded-lg bg-gray-50 p-4">

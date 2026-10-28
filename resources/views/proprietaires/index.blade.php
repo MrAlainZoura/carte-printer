@@ -3,7 +3,20 @@
 @section('breadcrumb', 'Propriétaires')
 @section('content')
 <div class="mx-auto max-w-7xl">
-    <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><h1 class="text-2xl font-bold text-gray-900">Propriétaires</h1><p class="mt-1 text-sm text-gray-500">Gérez les personnes et organisations propriétaires de véhicules.</p></div>@can('proprietaire.create')<a href="{{ route('proprietaires.create') }}" class="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>Nouveau propriétaire</a>@endcan</div>
+    <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Propriétaires</h1>
+            <p class="mt-1 text-sm text-gray-500">Gérez les personnes et organisations propriétaires de véhicules.</p>
+        </div>
+        {{--@can('proprietaire.create')
+            <a href="{{ route('proprietaires.create') }}" class=" inline-flex items-center gap-2 rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Nouveau propriétaire
+            </a>
+        @endcan--}}
+    </div>
     @if(session('success'))<div class="mb-5 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">{{ session('success') }}</div>@endif
     @if(session('error'))<div class="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{{ session('error') }}</div>@endif
     <x-data-table :rows="$proprietaires" placeholder="Nom, raison sociale, téléphone ou numéro d’impôt…">

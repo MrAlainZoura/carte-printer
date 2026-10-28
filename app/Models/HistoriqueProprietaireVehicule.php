@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HistoriqueProprietaireVehicule extends Model
 {
+    protected $table = 'historique_proprietaires_vehicules';
     protected $fillable = [
         'vehicule_id',
         'ancien_proprietaire_id',

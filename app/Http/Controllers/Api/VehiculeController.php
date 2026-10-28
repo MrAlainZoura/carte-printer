@@ -14,9 +14,9 @@ class VehiculeController extends ApiController
     {
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        return $this->respond(VehiculesService::all());
+        return $this->respond(VehiculesService::all((string) $request->query('search', '')));
     }
 
     public function create(): JsonResponse
