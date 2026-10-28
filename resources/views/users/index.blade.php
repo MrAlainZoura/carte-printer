@@ -10,9 +10,42 @@
         </div>
     @endif
     <x-data-table :rows="$users" placeholder="Nom, courriel ou téléphone…">
-        <table class="w-full text-left text-sm text-gray-600"><thead class="bg-gray-50 text-xs uppercase text-gray-500"><tr><th class="px-5 py-4">Nom</th><th class="px-5 py-4">Courriel</th><th class="px-5 py-4">Téléphone</th><th class="px-5 py-4">Date d’inscription</th><th class="px-5 py-4">Actions</th></tr></thead><tbody class="divide-y divide-gray-100">
-            @forelse($users as $user)<tr class="hover:bg-gray-50"><td class="px-5 py-4 font-semibold text-gray-900">{{ $user->name }}</td><td class="px-5 py-4">{{ $user->email ?: '—' }}</td><td class="px-5 py-4">{{ $user->tel ?: '—' }}</td><td class="px-5 py-4">{{ $user->created_at?->format('d/m/Y') }}</td><td class="whitespace-nowrap px-5 py-4"><a href="{{ route('users.show', $user) }}" class="font-medium text-blue-700 hover:underline">Détails</a>@can('user.manage')<span class="px-2 text-gray-300">|</span><a href="{{ route('users.edit', $user) }}" class="font-medium text-gray-700 hover:underline">Modifier</a><form method="POST" action="{{ route('users.destroy', $user) }}" class="ml-2 inline" onsubmit="return confirm('Supprimer cet utilisateur ?')">@csrf @method('DELETE')<button class="font-medium text-red-700 hover:underline">Supprimer</button></form>@endcan</td></tr>
-            @empty<tr><td colspan="5" class="px-5 py-12 text-center text-gray-500">Aucun utilisateur ne correspond à cette recherche.</td></tr>@endforelse
+        <table class="w-full text-left text-sm text-gray-600">
+            <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+                <tr>
+                    <th class="px-5 py-4">Nom</th>
+                    <th class="px-5 py-4">Courriel</th>
+                    <th class="px-5 py-4">Téléphone</th>
+                    <th class="px-5 py-4">Date d’inscription</th>
+                    <th class="px-5 py-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+            @forelse($users as $user)
+                <tr class="hover:bg-gray-50">
+                    <td class="px-5 py-4 font-semibold text-gray-900">{{ $user->name }}</td>
+                    <td class="px-5 py-4">{{ $user->email ?: '—' }}</td>
+                    <td class="px-5 py-4">{{ $user->tel ?: '—' }}</td>
+                    <td class="px-5 py-4">{{ $user->created_at?->format('d/m/Y') }}</td>
+                    <td class="whitespace-nowrap px-5 py-4">
+                        <a href="{{ route('users.show', $user) }}" class="font-medium text-blue-700 hover:underline">
+                            Détails
+                        </a>
+                        @can('user.manage')<span class="px-2 text-gray-300">|</span>
+                        <a href="{{ route('users.edit', $user) }}" class="font-medium text-gray-700 hover:underline">
+                            Modifier
+                        </a>
+                        <form method="POST" action="{{ route('users.destroy', $user) }}" class="ml-2 inline" onsubmit="return confirm('Supprimer cet utilisateur ?')">
+                            @csrf @method('DELETE')
+                            <button class="font-medium text-red-700 hover:underline">Supprimer</button>
+                        </form>@endcan
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5" class="px-5 py-12 text-center text-gray-500">Aucun utilisateur ne correspond à cette recherche.</td>
+                </tr>
+            @endforelse
         </tbody></table>
     </x-data-table>
 </div>

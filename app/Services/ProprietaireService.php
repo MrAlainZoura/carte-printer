@@ -22,7 +22,8 @@ class ProprietaireService implements ProprietaireServiceInterface
             'impot'             => 'string|max:255',
             // Téléphone obligatoire, format international
             'telephone'         => [
-                    'required',
+                    'sometimes',
+                    'nullable',
                     'string',
                     'unique:propietaires,telephone',
                     'regex:/^\+[1-9][0-9]{7,14}$/'
