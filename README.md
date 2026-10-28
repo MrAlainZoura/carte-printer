@@ -9,6 +9,9 @@ distincte de l’authentification web par session.
 ## Fonctionnalités
 
 - Gestion des véhicules, des propriétaires, des cartes roses et des plaques.
+- Historique du propriétaire initial dès l’enregistrement du véhicule et transferts
+  vers un propriétaire existant ou nouvellement créé, conservés dans
+  `historique_proprietaires_vehicules` (ancien/nouveau propriétaire, date et utilisateur).
 - Gestion des postes de travail, des produits, des stocks et des approvisionnements.
 - Gestion des utilisateurs, des rôles et des permissions.
 - Génération et impression PDF des cartes roses avec QR code.
@@ -44,6 +47,9 @@ propriétaires, les produits du catalogue et des postes, les approvisionnements,
 les postes de travail, les utilisateurs, les rôles et le profil utilisateur.
 La navigation Vue tient compte des permissions renvoyées par l’API, qui restent
 également contrôlées côté serveur.
+Si le lien « Changer de propriétaire » n’apparaît pas pour un compte existant,
+attribuez les permissions mises à jour avec
+`php artisan db:seed --class=UpdateVehiculeTransferPermissionSeeder`.
 Après avoir lancé Laravel sur le port 8000 :
 
 ```bash

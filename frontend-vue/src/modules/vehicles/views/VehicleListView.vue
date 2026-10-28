@@ -12,11 +12,12 @@ const route = useRoute()
 const store = useVehicleStore()
 const error = ref('')
 const success = ref(route.query.message || '')
+const search = ref('')
 
 async function load(page = 1) {
   error.value = ''
   try {
-    await store.fetch({ page })
+    await store.fetch({ page, search: search.value.trim() })
   } catch (requestError) {
     error.value = responseMessage(requestError, 'Impossible de charger les véhicules.')
   }
@@ -48,6 +49,12 @@ onMounted(() => load())
     <p v-if="success" role="status">{{ success }}</p>
     <BaseLoader v-if="store.loading">Chargement des véhicules…</BaseLoader>
     <div v-else class="card">
+      <form class="vehicle-search" @submit.prevent="load(1)">
+        <label for="vehicle-search">Rechercher par immatriculation, marque, type ou propriétaire</label>
+        <input id="vehicle-search" v-model="search" type="search" placeholder="Saisir votre recherche" />
+        <button type="submit">Rechercher</button>
+        <button v-if="search" type="button" class="secondary" @click="search = ''; load(1)">Effacer</button>
+      </form>
       <VehicleTable
         :vehicles="store.vehicles"
         :pagination="store.pagination"
@@ -59,3 +66,10 @@ onMounted(() => load())
     </div>
   </section>
 </template>
+
+<style scoped>
+.vehicle-search { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
+.vehicle-search label { flex-basis: 100%; color: var(--color-muted); }
+.vehicle-search input { min-width: min(100%, 18rem); flex: 1; }
+.vehicle-search .secondary { background: transparent; color: var(--color-text); border: 1px solid var(--color-border); }
+</style>

@@ -581,3 +581,7 @@ sodium
 **migration
 
 /opt/alt/php84/usr/bin/php artisan migrate:refresh --seed
+
+/opt/alt/php84/usr/bin/php artisan migrate --path=database/migrations/2026_10_16_190000_create_historique_proprietaires_vehicules_table.php
+
+/opt/alt/php84/usr/bin/php artisan db:seed --class=UpdateVehiculeTransferPermissionSeeder

@@ -153,6 +153,12 @@ class VehiculesService implements VehiculeServiceInterface
             $vehicule = Vehicule::create([...$data, 'plaque_id' => $plaque->id]);
             $plaque->update(['vehicule_id' => $vehicule->id]);
             $this->createCarteRoseForVehicule($vehicule, $request, $post);
+            $this->recordOwnerHistory(
+                $vehicule,
+                null,
+                $vehicule->proprietaire()->firstOrFail(),
+                'Création du véhicule'
+            );
 
             $stocks['plaque']->decrement('quantite');
             $stocks['carte rose']->decrement('quantite');
@@ -255,6 +261,27 @@ class VehiculesService implements VehiculeServiceInterface
         ]);
     }
 
+    private function recordOwnerHistory(
+        Vehicule $vehicule,
+        ?Propietaire $ancienProprietaire,
+        Propietaire $nouveauProprietaire,
+        ?string $ancienNom = null
+    ): void {
+        $nom = fn (Propietaire $proprietaire): string => $proprietaire->nom_complet
+            ?: $proprietaire->raison_sociale
+            ?: 'Propriétaire #'.$proprietaire->id;
+
+        HistoriqueProprietaireVehicule::create([
+            'vehicule_id' => $vehicule->id,
+            'ancien_proprietaire_id' => $ancienProprietaire?->id,
+            'nouveau_proprietaire_id' => $nouveauProprietaire->id,
+            'ancien_proprietaire' => $ancienProprietaire ? $nom($ancienProprietaire) : ($ancienNom ?? 'Propriétaire inconnu'),
+            'nouveau_proprietaire' => $nom($nouveauProprietaire),
+            'user_id' => Auth::id(),
+            'transfere_le' => now(),
+        ]);
+    }
+
     private function generateCarteNumero(Vehicule $vehicule): string
     {
         $ordre = CarteRose::query()->count() + 1;
@@ -322,7 +349,7 @@ class VehiculesService implements VehiculeServiceInterface
         ];
     }
 
-    public static function all(): array
+    public static function all(string $search = ''): array
     {
         $base = Vehicule::with('proprietaire')->latest();
 
@@ -330,9 +357,26 @@ class VehiculesService implements VehiculeServiceInterface
             $base->where('post_travail_id', $postId);
         }
 
+        $search = trim($search);
+        if ($search !== '') {
+            $base->where(function ($query) use ($search) {
+                $term = '%'.$search.'%';
+                $query->whereRaw('LOWER(immatriculation) LIKE LOWER(?)', [$term])
+                    ->orWhereRaw('LOWER(marque) LIKE LOWER(?)', [$term])
+                    ->orWhereRaw('LOWER(type) LIKE LOWER(?)', [$term])
+                    ->orWhereRaw('LOWER(couleur) LIKE LOWER(?)', [$term])
+                    ->orWhereRaw('LOWER(usage) LIKE LOWER(?)', [$term])
+                    ->orWhereRaw('LOWER(chassis) LIKE LOWER(?)', [$term])
+                    ->orWhereHas('proprietaire', function ($ownerQuery) use ($term) {
+                        $ownerQuery->whereRaw('LOWER(nom_complet) LIKE LOWER(?)', [$term])
+                            ->orWhereRaw('LOWER(raison_sociale) LIKE LOWER(?)', [$term]);
+                    });
+            });
+        }
+
         return [
             'message' => 'Liste des véhicules chargée.',
-            'data' => (clone $base)->paginate(10),
+            'data' => (clone $base)->paginate(10)->withQueryString(),
         ];
     }
 
@@ -398,17 +442,40 @@ class VehiculesService implements VehiculeServiceInterface
 
     public function transferOwner(int $id, Request $request): array
     {
-        $validated = $request->validate([
-            'propietaire_id' => [
-                'required',
-                'integer',
-                Rule::exists('propietaires', 'id')->whereNull('deleted_at'),
-            ],
-        ]);
+        $mode = $request->input('mode', 'existing');
+        $request->merge(['mode' => $mode]);
+        $request->validate(['mode' => ['required', Rule::in(['existing', 'new', 'update_current'])]]);
 
-        $vehicule = DB::transaction(function () use ($id, $validated) {
+        $validated = match ($mode) {
+            'existing' => $request->validate([
+                'propietaire_id' => [
+                    'required',
+                    'integer',
+                    Rule::exists('propietaires', 'id')->whereNull('deleted_at'),
+                ],
+            ]),
+            'new' => $request->validate($this->ownerDetailsRules('nouveau_proprietaire', $request)),
+            'update_current' => $request->validate($this->ownerDetailsRules('proprietaire', $request)),
+        };
+
+        if ($mode === 'update_current') {
+            DB::transaction(function () use ($id, $validated) {
+                $vehicule = Vehicule::query()->lockForUpdate()->findOrFail($id);
+                $proprietaire = Propietaire::query()->findOrFail($vehicule->propietaire_id);
+                $proprietaire->update($validated['proprietaire']);
+            });
+
+            return [
+                'message' => 'Les informations du propriétaire actuel ont été mises à jour.',
+                'data' => Vehicule::with(['proprietaire', 'plaque', 'carteRoses', 'postTravail'])->findOrFail($id),
+            ];
+        }
+
+        $vehicule = DB::transaction(function () use ($id, $validated, $mode) {
             $vehicule = Vehicule::query()->lockForUpdate()->findOrFail($id);
-            $nouveauProprietaire = Propietaire::query()->findOrFail($validated['propietaire_id']);
+            $nouveauProprietaire = $mode === 'new'
+                ? Propietaire::query()->create($validated['nouveau_proprietaire'])
+                : Propietaire::query()->findOrFail($validated['propietaire_id']);
 
             if ((int) $vehicule->propietaire_id === (int) $nouveauProprietaire->id) {
                 throw ValidationException::withMessages([
@@ -417,19 +484,7 @@ class VehiculesService implements VehiculeServiceInterface
             }
 
             $ancienProprietaire = Propietaire::withTrashed()->find($vehicule->propietaire_id);
-            $nomProprietaire = fn (?Propietaire $proprietaire): string => $proprietaire
-                ? ($proprietaire->nom_complet ?: $proprietaire->raison_sociale ?: 'Propriétaire #'.$proprietaire->id)
-                : 'Propriétaire inconnu';
-
-            HistoriqueProprietaireVehicule::create([
-                'vehicule_id' => $vehicule->id,
-                'ancien_proprietaire_id' => $ancienProprietaire?->id,
-                'nouveau_proprietaire_id' => $nouveauProprietaire->id,
-                'ancien_proprietaire' => $nomProprietaire($ancienProprietaire),
-                'nouveau_proprietaire' => $nomProprietaire($nouveauProprietaire),
-                'user_id' => Auth::id(),
-                'transfere_le' => now(),
-            ]);
+            $this->recordOwnerHistory($vehicule, $ancienProprietaire, $nouveauProprietaire);
 
             $vehicule->update(['propietaire_id' => $nouveauProprietaire->id]);
 
@@ -439,6 +494,24 @@ class VehiculesService implements VehiculeServiceInterface
         return [
             'message' => 'Propriétaire du véhicule modifié. Le transfert a été ajouté à l’historique.',
             'data' => $vehicule,
+        ];
+    }
+
+    /**
+     * @return array<string, array<int, mixed>>
+     */
+    private function ownerDetailsRules(string $prefix, Request $request): array
+    {
+        $typeField = $prefix.'.type';
+        $isPerson = fn (): bool => $request->input($typeField) === 'Personne Physique';
+
+        return [
+            $typeField => ['required', 'string', Rule::in(['Entreprise', 'Personne Physique', 'Organisation', 'Autres'])],
+            $prefix.'.nom_complet' => [Rule::requiredIf($isPerson), 'nullable', 'string', 'max:255'],
+            $prefix.'.raison_sociale' => [Rule::requiredIf(fn () => ! $isPerson()), 'nullable', 'string', 'max:255'],
+            $prefix.'.adresse_physique' => ['required', 'string', 'max:255'],
+            $prefix.'.telephone' => ['required', 'string', 'max:255'],
+            $prefix.'.impot' => [Rule::requiredIf(fn () => ! $isPerson()), 'nullable', 'string', 'max:255'],
         ];
     }
 

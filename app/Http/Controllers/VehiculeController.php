@@ -14,12 +14,13 @@ class VehiculeController extends Controller
         $this->service = $service;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $result = $this->service::all();
+        $result = $this->service::all((string) $request->query('search', ''));
         $vehicules = $result['data'];
+        $search = (string) $request->query('search', '');
 
-        return view('vehicules.index', compact('vehicules'));
+        return view('vehicules.index', compact('vehicules', 'search'));
     }
 
     public function create()

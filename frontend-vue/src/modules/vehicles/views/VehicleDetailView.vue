@@ -167,7 +167,11 @@ async function printCard() {
   <section class="page">
     <div class="spread">
       <h1>Détails du véhicule</h1>
-      <button type="button" @click="router.push(`/vehicles/${route.params.id}/edit`)">Modifier</button>
+      <div class="owner-actions">
+        <a href="#owner-transfer">Changer de propriétaire</a>
+        <a href="#owner-history" @click="loadHistory">Historique des propriétaires</a>
+        <button type="button" @click="router.push(`/vehicles/${route.params.id}/edit`)">Modifier</button>
+      </div>
     </div>
     <p v-if="error" class="alert" role="alert">{{ error }}</p>
     <p v-if="success" role="status">{{ success }}</p>
@@ -228,7 +232,7 @@ async function printCard() {
         </article>
       </div>
       <div class="card">
-        <h2>Transférer le propriétaire</h2>
+        <h2 id="owner-transfer">Transférer le propriétaire</h2>
         <button type="button" @click="loadOwnerOptions">Charger les propriétaires</button>
         <form v-if="ownerOptions.length" class="transfer" @submit.prevent="transferOwner">
           <select v-model="newOwnerId" required>
@@ -239,7 +243,8 @@ async function printCard() {
           </select>
           <button type="submit" :disabled="busy">Transférer</button>
         </form>
-        <button type="button" @click="loadHistory">Afficher l’historique des propriétaires</button>
+        <h3 id="owner-history">Historique des propriétaires</h3>
+        <button type="button" @click="loadHistory">Afficher l’historique</button>
         <ul v-if="history?.data">
           <li v-for="item in history.data" :key="item.id">
             {{ item.ancien_proprietaire }} → {{ item.nouveau_proprietaire }} ({{ item.transfere_le }})
@@ -261,6 +266,7 @@ async function printCard() {
 .details dt { color: var(--color-muted); }
 .details dd { margin: 0; }
 .card { margin-bottom: 1rem; }
+.owner-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .transfer { display: flex; gap: 0.5rem; margin: 0.75rem 0; }
 .inline-form { display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem; margin: 0.75rem 0; }
 .inline-form label { display: grid; gap: 0.3rem; }
